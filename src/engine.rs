@@ -3,6 +3,7 @@
 //! ARIA_XTR_ENGINE permite señalar un binario alternativo.
 
 use std::io::BufRead;
+use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
