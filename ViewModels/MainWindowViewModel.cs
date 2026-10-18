@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -46,6 +48,17 @@ public partial class MainWindowViewModel : ObservableObject
     public string DefaultDir => _reg.Settings.DefaultDir
         ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     public int DefaultConnections => Settings.ClampConnections(_reg.Settings.DefaultConnections);
+
+    public Settings AppSettings => _reg.Settings;
+
+    /// <summary>Devuelve true solo la PRIMERA vez que se oculta a la bandeja (persistido).</summary>
+    public bool ShouldShowTrayHint()
+    {
+        if (_reg.Settings.TrayHintShown) return false;
+        _reg.Settings.TrayHintShown = true;
+        _reg.SaveSettings();
+        return true;
+    }
 
     public MainWindowViewModel()
     {
@@ -213,6 +226,16 @@ public partial class MainWindowViewModel : ObservableObject
                     Completed.Add(vm);
                     _dirty = true;
                     _ = TryRemoveResultAsync(rpc, entry.Gid);
+                    // aviso solo si la ventana está oculta (minimizada a la bandeja)
+                    var uiHidden = Application.Current?.ApplicationLifetime
+                        is IClassicDesktopStyleApplicationLifetime dl && dl.MainWindow?.IsVisible == false;
+                    if (uiHidden)
+                    {
+                        var doneName = entry.Name;
+                        var doneSize = Loc.FormatSize(total);
+                        Dispatcher.UIThread.Post(() =>
+                            Toast.Show(Loc.DownloadDoneTitle, $"{doneName} · {doneSize}", Tray.OpenMainWindow));
+                    }
                     break;
                 case "error":
                     vm.UpdateProgress(done, total, 0, conns, slotsFree);

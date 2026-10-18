@@ -26,6 +26,8 @@
       <Button Grid.Column="1" Classes="ghost" Content="{x:Static svc:Loc.Browse}" Click="Browse_Click" />
     </Grid>
 
+    <CheckBox x:Name="TrayBox" Margin="0,14,0,0" Content="{x:Static svc:Loc.TraySetting}" />
+
     <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,16,0,0">
       <Button Classes="ghost" Content="{x:Static svc:Loc.Cancel}" Click="Cancel_Click" />
       <Button Classes="accent" Content="{x:Static svc:Loc.Save}" Click="Save_Click" />

@@ -12,6 +12,7 @@ public partial class SettingsWindow : Window
     public int ResultMaxConcurrent => (int)(MaxConcurrentBox.Value ?? 3);
     public int ResultConnections => (int)ConnSlider.Value;
     public string ResultDefaultDir => (DirBox.Text ?? "").Trim();
+    public bool ResultMinimizeToTray => TrayBox.IsChecked == true;
 
     public SettingsWindow() : this(new Settings()) { }
 
@@ -22,6 +23,7 @@ public partial class SettingsWindow : Window
         ConnSlider.Value = Settings.ClampConnections(s.DefaultConnections);
         ConnText.Text = ((int)ConnSlider.Value).ToString();
         DirBox.Text = s.DefaultDir;
+        TrayBox.IsChecked = s.MinimizeToTray;
     }
 
     private async void Browse_Click(object? sender, RoutedEventArgs e)

@@ -51,6 +51,14 @@ public static class Loc
     public static string DefaultFolder => T("default_folder");
     public static string Save => T("save");
 
+    // Bandeja del sistema y notificaciones
+    public static string TraySetting => T("tray_setting");
+    public static string TrayHintTitle => T("tray_hint_title");
+    public static string TrayHintBody => T("tray_hint_body");
+    public static string TrayOpen => T("tray_open");
+    public static string TrayExit => T("tray_exit");
+    public static string DownloadDoneTitle => T("download_done_title");
+
     // Diálogo borrar
     public static string DeleteTitle => T("delete_title");
     public static string DeleteQuestion => T("delete_question");
@@ -122,6 +130,12 @@ public static class Loc
         ["default_connections"] = "Conexiones por descarga (máx. 16 hilos)",
         ["default_folder"] = "Carpeta por defecto",
         ["save"] = "Guardar",
+        ["tray_setting"] = "Minimizar a la bandeja al cerrar (sigue descargando en segundo plano)",
+        ["tray_hint_title"] = "Aria-XTRDownloader sigue activo",
+        ["tray_hint_body"] = "La aplicación se ha minimizado a la bandeja del sistema y seguirá descargando. Haz doble clic en el icono ⚡ junto al reloj para volver a abrirla.",
+        ["tray_open"] = "Abrir Aria-XTRDownloader",
+        ["tray_exit"] = "Salir",
+        ["download_done_title"] = "Descarga completada",
         ["delete_title"] = "Confirmar eliminación",
         ["delete_question"] = "¿Eliminar esta descarga de la lista?",
         ["delete_also_file"] = "Borrar también el archivo descargado/parcial",
@@ -170,6 +184,12 @@ public static class Loc
         ["default_connections"] = "Connections per download (max 16 threads)",
         ["default_folder"] = "Default folder",
         ["save"] = "Save",
+        ["tray_setting"] = "Minimize to tray on close (keeps downloading in the background)",
+        ["tray_hint_title"] = "Aria-XTRDownloader is still running",
+        ["tray_hint_body"] = "The app was minimized to the system tray and will keep downloading. Double-click the ⚡ icon next to the clock to open it again.",
+        ["tray_open"] = "Open Aria-XTRDownloader",
+        ["tray_exit"] = "Exit",
+        ["download_done_title"] = "Download completed",
         ["delete_title"] = "Confirm delete",
         ["delete_question"] = "Remove this download from the list?",
         ["delete_also_file"] = "Also delete downloaded/partial file",

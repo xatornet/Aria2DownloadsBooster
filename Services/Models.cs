@@ -8,6 +8,10 @@ public class Settings
     public int MaxConcurrentDownloads { get; set; } = 3;
     public int DefaultConnections { get; set; } = 16;
     public string? DefaultDir { get; set; }
+    /// <summary>Al cerrar la ventana, minimizar a la bandeja y seguir descargando.</summary>
+    public bool MinimizeToTray { get; set; } = true;
+    /// <summary>Ya se mostró una vez el aviso de "sigue activo en segundo plano".</summary>
+    public bool TrayHintShown { get; set; } = false;
 
     public static int ClampConnections(int n) => Math.Clamp(n, 1, 16);
 }

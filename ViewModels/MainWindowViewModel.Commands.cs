@@ -388,7 +388,9 @@ public partial class MainWindowViewModel
         _reg.Settings.MaxConcurrentDownloads = win.ResultMaxConcurrent;
         _reg.Settings.DefaultConnections = Settings.ClampConnections(win.ResultConnections);
         _reg.Settings.DefaultDir = win.ResultDefaultDir;
+        _reg.Settings.MinimizeToTray = win.ResultMinimizeToTray;
         _reg.SaveSettings();
+        Tray.SetEnabled(win.ResultMinimizeToTray);
 
         if (_engine.IsRunning)
         {
