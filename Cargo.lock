@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "aria-xtrdownloader"
+name = "aria2-downloads-booster"
 version = "1.0.0"
 dependencies = [
  "gtk4",
