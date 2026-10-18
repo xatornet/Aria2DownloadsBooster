@@ -101,7 +101,7 @@ pub enum TrayHandle {
 
 impl TrayHandle {
     pub fn spawn(events: Sender<TrayEvent>) -> Self {
-        match XtrTray { events }.spawn() {
+        match (XtrTray { events }).spawn() {
             Ok(h) => {
                 crate::paths::ui_log_line("tray: icono registrado en el host (ksni)");
                 TrayHandle::Live(h)
