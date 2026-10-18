@@ -4,6 +4,9 @@
 
 Acelerador de descargas multi-hilo con interfaz **nativa** basado en **aria2**.
 
+<img width="1001" height="702" alt="imagen" src="https://github.com/user-attachments/assets/1ecd6954-aeac-43ce-941d-fe323b19bbf1" />
+
+
 ## Qué hace
 
 - Pide un **enlace** (uno o varios como espejos) y una **carpeta de destino**, y descarga a la
