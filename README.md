@@ -26,6 +26,23 @@ cargo build --release
 ./target/release/aria-xtrdownloader
 ```
 
+## Instalar como paquete Arch (recomendado)
+
+```bash
+cd XTRDownloader/packaging
+makepkg -si
+```
+
+O sin clonar el repo (el PKGBUILD se descarga el código solo, rama `arch`):
+
+```bash
+wget https://raw.githubusercontent.com/xatornet/XTRDownloader/arch/packaging/PKGBUILD
+makepkg -si
+```
+
+Instala `/usr/bin/aria-xtrdownloader`, entrada de menú de aplicaciones e icono
+(tema hicolor). Dependencias en tiempo de ejecución: `aria2`, `gtk4`, `libnotify`.
+
 ## Segundo plano y notificaciones
 
 - **Cerrar la ventana no cierra la aplicación**: se oculta y sigue descargando en segundo plano

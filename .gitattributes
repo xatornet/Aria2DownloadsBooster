@@ -1,0 +1,7 @@
+# Arch: los ficheros de empaquetado SIEMPRE en LF (PKGBUILD con CRLF rompe makepkg)
+PKGBUILD text eol=lf
+*.desktop text eol=lf
+*.svg text eol=lf
+*.sh text eol=lf
+Cargo.lock text eol=lf
+LICENSE text eol=lf

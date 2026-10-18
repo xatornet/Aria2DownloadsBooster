@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Aria-XTRDownloader
+GenericName=Download Manager
+GenericName[es]=Gestor de descargas
+Comment=Acelerador de descargas basado en aria2 (16 hilos, pausa/reanudación persistente)
+Comment[en]=aria2-based download accelerator (16 threads, persistent pause/resume)
+Keywords=download;aria2;accelerator;descargas;acelerador;
+Exec=aria-xtrdownloader
+Icon=aria-xtrdownloader
+Terminal=false
+Categories=Network;FileTransfer;
+StartupNotify=true
+StartupWMClass=aria-xtrdownloader

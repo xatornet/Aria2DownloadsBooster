@@ -469,6 +469,9 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
         .default_width(1000)
         .default_height(740)
         .build();
+    // Icono del tema (instalado por el paquete en hicolor/scalable/apps);
+    // sin instalación queda el icono por defecto — sin coste.
+    win.set_icon_name(Some("aria-xtrdownloader"));
 
     let provider = gtk::CssProvider::new();
     provider.load_from_data(include_str!("style.css"));
