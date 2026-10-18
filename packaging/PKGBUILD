@@ -1,13 +1,14 @@
 # Maintainer: XaToR <43992639+xatornet@users.noreply.github.com>
 pkgname=aria-xtrdownloader
 pkgver=1.0.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Acelerador de descargas basado en aria2 con interfaz nativa GTK4 (16 hilos, pausa/reanudación persistente)"
 arch=('x86_64')
 url="https://github.com/xatornet/XTRDownloader"
 license=('MIT')
 depends=('aria2' 'gtk4' 'libnotify')
 makedepends=('rust' 'cargo')
+options=('!debug')
 source=("$pkgname::git+$url.git#branch=arch")
 sha256sums=('SKIP')
 

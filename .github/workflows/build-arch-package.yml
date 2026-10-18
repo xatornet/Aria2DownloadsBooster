@@ -41,7 +41,7 @@ jobs:
       - name: Recoger artefacto
         run: |
           mkdir -p dist
-          cp /home/builder/pkgbuild/aria-xtrdownloader-*.pkg.tar.zst dist/
+          cp /home/builder/pkgbuild/aria-xtrdownloader-[0-9]*.pkg.tar.zst dist/
           ls -la dist/
 
       - name: Publicar en Releases
