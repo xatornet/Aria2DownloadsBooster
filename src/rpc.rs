@@ -1,16 +1,20 @@
-//! Cliente JSON-RPC mínimo para el demonio aria2c (paridad con AriaRpc.cs).
+//! Cliente JSON-RPC mínimo para el demonio aria2c.
+//! Transporte: HTTP/1.1 sobre TcpStream (solo localhost) — sin dependencias HTTP
+//! sujetas a deriva de versiones.
 //!
 //! Lecciones verificadas contra aria2 1.37 (¡no cambiar sin probar!):
 //! - Con --rpc-secret, en system.multicall el token va como PRIMER param de CADA
 //!   sub-llamada y NINGUNO en el nivel exterior; el payload es params=[[specs]]
 //!   (doble array).
 //! - Cada elemento devuelto por multicall es [valor] (array directo) si OK, o
-//!   {"code":…,"message":…} si error (NO {"result":[…]}).
+//!   {"code":…, "message":…} si error (NO {"result":[…]}).
 //! - aria2.tellWaiting está roto dentro de multicall con rpc-secret: nunca usarlo.
 //! - El error de gid desaparecido es literalmente "GID <hex> is not found".
 
 use serde_json::{json, Value};
 use std::fmt;
+use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -34,19 +38,15 @@ impl AriaError {
 }
 
 pub struct Rpc {
-    url: String,
+    addr: String,
     secret: String,
-    agent: ureq::Agent,
 }
 
 impl Rpc {
     pub fn new(port: u16, secret: &str) -> Self {
         Rpc {
-            url: format!("http://127.0.0.1:{port}/jsonrpc"),
+            addr: format!("127.0.0.1:{port}"),
             secret: secret.to_string(),
-            agent: ureq::AgentBuilder::new()
-                .timeout(Duration::from_secs(12))
-                .build(),
         }
     }
 
@@ -76,17 +76,40 @@ impl Rpc {
             "id": "1",
             "method": method,
             "params": params,
-        });
-        let resp = self
-            .agent
-            .post(&self.url)
-            .send_json(payload)
-            .map_err(map_ureq_err)?;
-        let body: Value = resp
-            .json()
-            .map_err(|e| AriaError { code: "parse".into(), message: e.to_string() })?;
+        })
+        .to_string();
 
-        if let Some(err) = body.get("error") {
+        let request = format!(
+            "POST /jsonrpc HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\n\
+             Content-Length: {}\r\nConnection: close\r\n\r\n{}",
+            self.addr,
+            payload.len(),
+            payload
+        );
+
+        let mut stream = TcpStream::connect(&self.addr).map_err(io_err)?;
+        stream.set_write_timeout(Some(Duration::from_secs(12))).map_err(io_err)?;
+        stream.set_read_timeout(Some(Duration::from_secs(15))).map_err(io_err)?;
+        stream.write_all(request.as_bytes()).map_err(io_err)?;
+        stream.flush().map_err(io_err)?;
+
+        // Connection: close ⇒ leemos hasta el final de la conexión.
+        let mut buf = Vec::with_capacity(8192);
+        stream.read_to_end(&mut buf).map_err(io_err)?;
+
+        // separar cabeceras/cuerpo
+        let split = find_headers_end(&buf).ok_or_else(|| AriaError {
+            code: "proto".into(),
+            message: "respuesta HTTP sin fin de cabeceras".into(),
+        })?;
+        let body_txt = String::from_utf8_lossy(&buf[split..]);
+
+        let parsed: Value = serde_json::from_str(body_txt.trim_start()).map_err(|e| AriaError {
+            code: "parse".into(),
+            message: format!("respuesta no-JSON del demonio: {e}"),
+        })?;
+
+        if let Some(err) = parsed.get("error") {
             return Err(AriaError {
                 code: err.get("code").map(|c| c.to_string()).unwrap_or_default(),
                 message: err
@@ -96,7 +119,7 @@ impl Rpc {
                     .to_string(),
             });
         }
-        Ok(body.get("result").cloned().unwrap_or(Value::Null))
+        Ok(parsed.get("result").cloned().unwrap_or(Value::Null))
     }
 
     /// Versión sin fallos (para probes de arranque).
@@ -109,11 +132,15 @@ impl Rpc {
     }
 }
 
-fn map_ureq_err(e: ureq::Error) -> AriaError {
-    AriaError {
-        code: e.status().map(|s| s.to_string()).unwrap_or_else(|| "transport".into()),
-        message: e.to_string(),
+fn io_err(e: std::io::Error) -> AriaError {
+    AriaError { code: "transport".into(), message: e.to_string() }
+}
+
+fn find_headers_end(buf: &[u8]) -> Option<usize> {
+    if buf.len() < 4 {
+        return None;
     }
+    buf.windows(4).position(|w| w == b"\r\n\r\n").map(|p| p + 4)
 }
 
 // ----- parseo de elementos de multicall -----

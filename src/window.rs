@@ -30,6 +30,17 @@ fn meta(label: &str) -> gtk::Label {
     l
 }
 
+fn clear_list(list: &gtk::ListBox) {
+    while let Some(r) = list.row_at_index(0) {
+        list.remove(&r);
+    }
+}
+
+/// escape para markup Pango
+fn esc(s: &str) -> String {
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+}
+
 fn make_row(cmd_tx: &Sender<Cmd>, mr: &ModelRow) -> (gtk::ListBoxRow, RowWidgets) {
     let card = gtk::Box::new(gtk::Orientation::Vertical, 4);
     card.add_css_class("card");
@@ -37,7 +48,7 @@ fn make_row(cmd_tx: &Sender<Cmd>, mr: &ModelRow) -> (gtk::ListBoxRow, RowWidgets
     card.set_margin_bottom(2);
     card.set_margin_start(8);
     card.set_margin_end(8);
-    card.set_padding(10);
+    gtk::prelude::BoxExt::set_padding(&card, 10);
 
     // ── línea 1: nombre + badge + detalles
     let line1 = gtk::Box::new(gtk::Orientation::Horizontal, 8);
@@ -68,9 +79,11 @@ fn make_row(cmd_tx: &Sender<Cmd>, mr: &ModelRow) -> (gtk::ListBoxRow, RowWidgets
     let speed = meta("");
     let threads = meta("");
     let eta = meta("");
-    for w in [&size as &gtk::Widget, &action, &speed, &threads, &eta] {
-        line2.append(w);
-    }
+    line2.append(&size);
+    line2.append(&action);
+    line2.append(&speed);
+    line2.append(&threads);
+    line2.append(&eta);
 
     let error = meta("");
     error.add_css_class("err");
@@ -154,9 +167,9 @@ fn make_row(cmd_tx: &Sender<Cmd>, mr: &ModelRow) -> (gtk::ListBoxRow, RowWidgets
         let id = id.clone();
         del_btn.connect_clicked(move |b| {
             // confirmación con diálogo; si no hay ventana aún, borrar directo
-            match b.toplevel_window() {
-                Some(gtk::Toplevel::Window(win)) => dialog_delete(&win, t.clone(), id.clone()),
-                _ => {
+            match b.root().and_then(|w| w.downcast::<gtk::Window>().ok()) {
+                Some(win) => dialog_delete(&win, t.clone(), id.clone()),
+                None => {
                     let _ = t.send(Cmd::Delete { id: id.clone(), delete_file: false });
                 }
             }
@@ -183,7 +196,7 @@ fn make_row(cmd_tx: &Sender<Cmd>, mr: &ModelRow) -> (gtk::ListBoxRow, RowWidgets
 fn dialog_shell(parent: &gtk::Window, title: &str) -> gtk::Window {
     let win = gtk::Window::builder()
         .title(title)
-        .transient_for(Some(parent))
+        .transient_for(parent)
         .modal(true)
         .default_width(560)
         .resizable(false)
@@ -244,7 +257,7 @@ fn dialog_add(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(
 
     bx.append(&meta(tr("Nombre de archivo (opcional)", "File name (optional)")));
     let fn_entry = gtk::Entry::new();
-    fn_entry.set_placeholder_text(tr("Automático desde la URL", "Automatic from URL"));
+    fn_entry.set_placeholder_text(Some(tr("Automático desde la URL", "Automatic from URL")));
     bx.append(&fn_entry);
 
     let conn_row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
@@ -294,7 +307,7 @@ fn dialog_add(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(
     browse2.connect_clicked({
         let de = dir_entry.clone();
         let pw = win.clone();
-        move |_| pick_folder(&pw, &de),
+        move |_| pick_folder(&pw, &de)
     });
 
     bx.append(&buttons_row(&cancel, &ok));
@@ -351,7 +364,7 @@ fn dialog_settings(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefC
     browse.connect_clicked({
         let de = dir_entry.clone();
         let pw = win.clone();
-        move |_| pick_folder(&pw, &de),
+        move |_| pick_folder(&pw, &de)
     });
 
     bx.append(&buttons_row(&cancel, &save));
@@ -394,7 +407,7 @@ fn apply_row(ri: &RowInfo, w: &RowWidgets) {
     w.badge.set_markup(&format!(
         "<span foreground=\"{}\" weight=\"bold\">{}</span>",
         ri.badge_hex,
-        glib::escape_text(&ri.status_text)
+        esc(&ri.status_text)
     ));
     w.progress.set_show_text(ri.fraction_known);
     w.progress.set_fraction(if ri.fraction_known { ri.fraction } else { 0.0 });
@@ -418,7 +431,7 @@ fn apply_row(ri: &RowInfo, w: &RowWidgets) {
 
 // ------------------------------------------------------------------ ventana principal
 
-pub fn build(app: &gtk::Application, rx: glib::Receiver<Event>, cmd_tx: Sender<Cmd>) {
+pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_tx: Sender<Cmd>) {
     let win = gtk::ApplicationWindow::builder()
         .application(app)
         .title("⚡ Aria-XTRDownloader")
@@ -426,9 +439,11 @@ pub fn build(app: &gtk::Application, rx: glib::Receiver<Event>, cmd_tx: Sender<C
         .default_height(740)
         .build();
 
-    let provider = gtk::CssProvider::from_data(include_bytes!("style.css")).expect("CSS inválido");
+    let provider = gtk::CssProvider::new();
+    provider.load_from_data(include_bytes!("style.css")).expect("CSS inválido");
+    let display = gtk::prelude::WidgetExt::display(&win);
     gtk::style_context_add_provider_for_display(
-        &win.display(),
+        &display,
         &provider,
         gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
     );
@@ -536,13 +551,13 @@ pub fn build(app: &gtk::Application, rx: glib::Receiver<Event>, cmd_tx: Sender<C
         let w = win.clone();
         let t = cmd_tx.clone();
         let d = defaults.clone();
-        move |_| dialog_add(&w, t.clone(), &d)
+        move |_| dialog_add(&w.upcast_ref::<gtk::Window>(), t.clone(), &d)
     });
     btn_settings.connect_clicked({
         let w = win.clone();
         let t = cmd_tx.clone();
         let d = defaults.clone();
-        move |_| dialog_settings(&w, t.clone(), &d)
+        move |_| dialog_settings(&w.upcast_ref::<gtk::Window>(), t.clone(), &d)
     });
     btn_cleanup.connect_clicked({
         let t = cmd_tx.clone();
@@ -559,11 +574,19 @@ pub fn build(app: &gtk::Application, rx: glib::Receiver<Event>, cmd_tx: Sender<C
     let speed2 = speed_lbl.clone();
     let heartbeat2 = heartbeat_lbl.clone();
     let empty2 = empty.clone();
-    let _attached = rx.attach(None, move |ev| {
+    // dreno del canal del worker cada 25 ms (sin API de canal de glib: robusta entre versiones)
+    let ev_cell = Rc::new(RefCell::new(rx));
+    let _attached = glib::timeout_add_local(std::time::Duration::from_millis(25), move || {
+      loop {
+        let ev = match ev_cell.borrow().try_recv() {
+            Ok(ev) => ev,
+            Err(std::sync::mpsc::TryRecvError::Empty) => break,
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => return glib::ControlFlow::Break,
+        };
         match ev {
             Event::Model(rows) => {
-                list_active.remove_all();
-                list_done.remove_all();
+                clear_list(&list_active);
+                clear_list(&list_done);
                 map.borrow_mut().clear();
                 let mut n_active = 0usize;
                 for mr in &rows {
@@ -607,7 +630,8 @@ pub fn build(app: &gtk::Application, rx: glib::Receiver<Event>, cmd_tx: Sender<C
             }
             Event::Bye => app2.quit(),
         }
-        glib::ControlFlow::Continue(())
+      }
+      glib::ControlFlow::Continue
     });
 
     // cierre: apaga el motor y sale (con fallback de 6 s)

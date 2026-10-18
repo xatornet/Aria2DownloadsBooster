@@ -6,7 +6,7 @@ mod rpc;
 mod window;
 mod worker;
 
-use gtk::glib;
+use gtk::gio::prelude::*;
 
 fn main() {
     let app = gtk::Application::builder()
@@ -14,11 +14,11 @@ fn main() {
         .build();
 
     app.connect_activate(|app| {
-        // UI ← worker: canal de eventos glib (线程-safe); UI → worker: mpsc de comandos
+        // UI → worker: mpsc de comandos. worker → UI: mpsc de eventos drenado por timeout.
         let (cmd_tx, cmd_rx) = std::sync::mpsc::channel();
-        let (ui_tx, ui_rx) = glib::MainContext::channel::<worker::Event>(glib::Priority::default());
-        std::thread::spawn(move || worker::run(cmd_rx, ui_tx.clone()));
-        window::build(app, ui_rx, cmd_tx);
+        let (ev_tx, ev_rx) = std::sync::mpsc::channel::<worker::Event>();
+        std::thread::spawn(move || worker::run(cmd_rx, ev_tx));
+        window::build(app, ev_rx, cmd_tx);
     });
 
     app.run();

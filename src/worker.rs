@@ -214,7 +214,7 @@ fn engine_info(engine: &Engine) -> EngineInfo {
 fn build_row(e: &Entry, done: i64, total: i64, speed: f64, conns: i32, retry_hint: bool, slots_free: bool) -> RowInfo {
     let status = e.status.as_str();
     let status_text = if status == "waiting" && retry_hint {
-        tr("Reintentando…", "Retrying…")
+        tr("Reintentando…", "Retrying…").to_string()
     } else {
         status_text(status)
     };
@@ -325,7 +325,7 @@ fn poll(st: &mut State, engine: &Engine, out: &Sender<Event>, last_poll_err: &mu
     };
     let elems: Vec<serde_json::Value> = res.as_array().cloned().unwrap_or_default();
     let daemon_active = elems.last().and_then(mc_get).and_then(|v| v.as_array().map(|a| a.len())).unwrap_or(0);
-    let slots_free = daemon_active as i32 < st.settings.max_concurrent_downloads.max(1);
+    let slots_free = (daemon_active as i32) < st.settings.max_concurrent_downloads.max(1);
 
     let mut rows = Vec::new();
     let mut total_speed = 0f64;
@@ -442,9 +442,9 @@ fn force_pause(rpc: &Rpc, gid: &str) -> Result<(), crate::rpc::AriaError> {
         Err(ex) if ex.message.to_lowercase().contains("paused now") => {
             // fase transitoria (arranque/handshake): reintenta una vez
             std::thread::sleep(Duration::from_millis(1200));
-            rpc.call("aria2.forcePause", &[json!(gid)])
+            rpc.call("aria2.forcePause", &[json!(gid)]).map(|_| ())
         }
-        other => other,
+        other => other.map(|_| ()),
     }
 }
 
@@ -537,7 +537,7 @@ fn handle_cmd(cmd: &Cmd, st: &mut State, engine: &mut Engine, out: &Sender<Event
             let Some(idx) = st.find(id) else { return };
             if let Some(gid) = st.entries[idx].gid.clone() {
                 match rpc.call("aria2.unpause", &[json!(gid)]) {
-                    Ok(()) => {
+                    Ok(_) => {
                         st.entries[idx].status = "waiting".into();
                         st.dirty = true;
                         flush_model(st, out);
@@ -591,7 +591,7 @@ fn handle_cmd(cmd: &Cmd, st: &mut State, engine: &mut Engine, out: &Sender<Event
         }
         Cmd::SetSettings { max_concurrent, default_connections, default_dir } => {
             st.settings = Settings {
-                max_concurrent_downloads: max_concurrent.clamp(1, 20),
+                max_concurrent_downloads: (*max_concurrent).clamp(1, 20),
                 default_connections: clamp_connections(*default_connections),
                 default_dir: default_dir.clone(),
             };

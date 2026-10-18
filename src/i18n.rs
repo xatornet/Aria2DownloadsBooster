@@ -1,5 +1,6 @@
 //! Localización mínima: español por defecto, inglés si el sistema está en inglés.
 
+use gtk::glib;
 use std::sync::OnceLock;
 
 static IS_EN: OnceLock<bool> = OnceLock::new();
@@ -25,15 +26,15 @@ pub fn tr<'a>(es: &'a str, en: &'a str) -> &'a str {
     if is_english() { en } else { es }
 }
 
-pub fn status_text(key: &str) -> &'static str {
+pub fn status_text(key: &str) -> String {
     match key {
-        "active" => tr("Descargando", "Downloading"),
-        "waiting" => tr("En cola", "Waiting"),
-        "paused" => tr("Pausada", "Paused"),
-        "stopped" => tr("Detenida", "Stopped"),
-        "error" => tr("Error", "Error"),
-        "complete" => tr("Completada", "Completed"),
-        other => other,
+        "active" => tr("Descargando", "Downloading").to_string(),
+        "waiting" => tr("En cola", "Waiting").to_string(),
+        "paused" => tr("Pausada", "Paused").to_string(),
+        "stopped" => tr("Detenida", "Stopped").to_string(),
+        "error" => tr("Error", "Error").to_string(),
+        "complete" => tr("Completada", "Completed").to_string(),
+        other => other.to_string(),
     }
 }
 
