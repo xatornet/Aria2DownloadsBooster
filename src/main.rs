@@ -3,7 +3,6 @@ mod i18n;
 mod models;
 mod paths;
 mod rpc;
-mod tray;
 mod window;
 mod worker;
 
@@ -21,7 +20,6 @@ fn main() {
             return;
         }
         // UI → worker: mpsc de comandos. worker → UI: mpsc de eventos drenado por timeout.
-        // (La bandeja SNI nace y muere en el worker; sus eventos viajan como Event.)
         let (cmd_tx, cmd_rx) = std::sync::mpsc::channel();
         let (ev_tx, ev_rx) = std::sync::mpsc::channel::<worker::Event>();
         std::thread::spawn(move || worker::run(cmd_rx, ev_tx));

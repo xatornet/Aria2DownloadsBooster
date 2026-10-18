@@ -47,18 +47,10 @@ makepkg -si
 Instala `/usr/bin/aria-xtrdownloader`, entrada de menú de aplicaciones e icono
 (tema hicolor). Dependencias en tiempo de ejecución: `aria2`, `gtk4`, `libnotify`.
 
-## Segundo plano, bandeja y notificaciones
+## Segundo plano y notificaciones
 
 - **Cerrar la ventana no cierra la aplicación**: se oculta y sigue descargando en segundo plano
   (ajuste activable/desactivable). La primera vez avisa con una notificación del escritorio.
-- **Icono en la bandeja del sistema** mientras funciona en segundo plano (protocolo
-  StatusNotifierItem sobre D-Bus, implementación propia en Rust, sin dependencias extra):
-  - **Clic izquierdo** (o menú → Abrir): restaura la ventana.
-  - **Menú → Salir**: cierre definitivo (apaga el motor aria2; el icono desaparece).
-  - Funciona en KDE, XFCE, Cinnamon, LXQt, Hyprland+i/waybar, etc.
-    En **GNOME** hace falta la extensión *«AppIndicator and KStatusNotifierItem Support»*.
-  - El icono (`aria-xtrdownloader`) sale al estar **instalada** la app vía paquete (tema hicolor);
-    ejecutada suelta desde `target/` puede mostrarse con icono genérico.
 - Al terminar una descarga mientras la ventana está oculta, notifica *«Descarga completada»*
   (usa `notify-send` — paquete `libnotify`; si falta, se ignora en silencio).
 - **Relanzar la app restaura la ventana** (instancia única vía GtkApplication).

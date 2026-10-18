@@ -72,18 +72,7 @@ pub enum Event {
     Flash(String),
     /// Ocultar la ventana principal (modo segundo plano).
     HideWindow,
-    /// La bandeja pidió restaurar la ventana (clic / menú Abrir).
-    PresentWindow,
-    /// Ajustes persistentes (arranque y tras guardar): sincronizan diálogos y bandeja.
-    Settings { dir: String, connections: i32, minimize_to_tray: bool },
     Bye,
-}
-
-/// Eventos que llegan desde la bandeja de notificaciones SNI (hilo tray).
-#[derive(Clone)]
-pub enum TrayEvent {
-    ShowWindow,
-    Quit,
 }
 
 // ------------------------------------------------------------------ estado
@@ -133,11 +122,6 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
     let mut next_engine_try = Instant::now();
     let mut last_poll_err = String::new();
 
-    // Bandeja SNI: un hilo con conexión D-Bus propia, viva mientras el ajuste lo esté.
-    let (tray_tx, tray_rx) = std::sync::mpsc::channel::<TrayEvent>();
-    let mut tray = TrayCtl::new();
-    tray.sync(st.settings.minimize_to_tray, &tray_tx);
-
     // Carga: tras un cierre sin parada limpia nada vive en aria2 → "stopped".
     for e in st.entries.iter_mut() {
         if matches!(e.status.as_str(), "active" | "waiting") {
@@ -146,7 +130,6 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
     }
     st.dirty = true;
     flush_model(&st, &out);
-    send_settings(&st, &out);
 
     loop {
         let deadline = Instant::now() + Duration::from_secs(1);
@@ -154,18 +137,6 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
             let t = deadline.saturating_duration_since(Instant::now());
             if t.is_zero() {
                 break;
-            }
-            // Eventos de la bandeja (prueba no bloqueante, no altera el plazo).
-            match tray_rx.try_recv() {
-                Ok(TrayEvent::ShowWindow) => {
-                    let _ = out.send(Event::PresentWindow);
-                }
-                Ok(TrayEvent::Quit) => {
-                    engine.stop_shutdown();
-                    let _ = out.send(Event::Bye);
-                    return;
-                }
-                Err(_) => {}
             }
             match cmds.recv_timeout(t) {
                 Ok(Cmd::Shutdown) => {
@@ -193,13 +164,7 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
                     }
                     let _ = out.send(Event::HideWindow);
                 }
-                Ok(cmd) => {
-                    let was_settings = matches!(cmd, Cmd::SetSettings { .. });
-                    handle_cmd(&cmd, &mut st, &mut engine, &out);
-                    if was_settings {
-                        tray.sync(st.settings.minimize_to_tray, &tray_tx);
-                    }
-                }
+                Ok(cmd) => handle_cmd(&cmd, &mut st, &mut engine, &out),
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => break,
                 Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                     engine.stop_shutdown();
@@ -676,7 +641,6 @@ fn handle_cmd(cmd: &Cmd, st: &mut State, engine: &mut Engine, out: &Sender<Event
             }
             st.dirty = true;
             flash(out, &format!("✔ {}", tr("Ajustes guardados", "Settings saved")));
-            send_settings(st, out);
         }
         Cmd::CleanupCompleted => {
             st.entries.retain(|e| !e.completed);
@@ -686,51 +650,6 @@ fn handle_cmd(cmd: &Cmd, st: &mut State, engine: &mut Engine, out: &Sender<Event
         Cmd::SetHidden(h) => st.hidden = *h,
         Cmd::Shutdown | Cmd::HideRequested => unreachable!(),
     }
-}
-
-// ---------------------------------------------------------------- bandeja SNI
-
-/// Ciclo de vida del icono de bandeja (hilo D-Bus propio, ver tray.rs).
-struct TrayCtl {
-    handle: Option<crate::tray::TrayHandle>,
-}
-
-impl TrayCtl {
-    fn new() -> Self {
-        TrayCtl { handle: None }
-    }
-
-    /// Enciende/apaga el icono según el ajuste vigente (idempotente).
-    fn sync(&mut self, enabled: bool, tx: &Sender<TrayEvent>) {
-        if enabled && self.handle.is_none() {
-            self.handle = Some(crate::tray::TrayHandle::spawn(tx.clone()));
-        } else if !enabled {
-            if let Some(h) = self.handle.take() {
-                h.shutdown();
-            }
-        }
-    }
-}
-
-impl Drop for TrayCtl {
-    fn drop(&mut self) {
-        if let Some(h) = self.handle.take() {
-            h.shutdown();
-        }
-    }
-}
-
-/// Envía los ajustes efectivos a la UI (carpeta/hilos/bandeja) para sincronizarla.
-fn send_settings(st: &State, out: &Sender<Event>) {    let dir = st.settings.default_dir.clone().unwrap_or_else(|| {
-        std::env::var("HOME")
-            .map(|h| format!("{h}/Downloads"))
-            .unwrap_or_else(|_| ".".into())
-    });
-    let _ = out.send(Event::Settings {
-        dir,
-        connections: st.settings.default_connections,
-        minimize_to_tray: st.settings.minimize_to_tray,
-    });
 }
 
 /// Notificación del escritorio (freedesktop). Silenciosa si notify-send no existe.
