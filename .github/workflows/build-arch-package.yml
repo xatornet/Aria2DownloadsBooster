@@ -1,0 +1,56 @@
+name: Build Arch package
+
+# Compila el paquete Arch (contenedor oficial archlinux) y publica el
+# .pkg.tar.zst en GitHub Releases.
+#
+# Disparadores:
+#   - push de un tag  arch-build-*   → crea/actualiza la Release con el paquete
+#   - manual (Actions → Build Arch package → Run workflow)
+#     (el disparo manual solo aparece una vez que este archivo vive en la rama por defecto)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'arch-build-*'
+
+permissions:
+  contents: write
+
+jobs:
+  pkg:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux/archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar toolchain de Arch
+        run: |
+          echo 'Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch' > /etc/pacman.d/mirrorlist
+          pacman -Syu --noconfirm --needed base-devel git rust aria2 gtk4 libnotify
+
+      - name: Compilar paquete (makepkg como usuario no-root)
+        run: |
+          useradd -m builder
+          mkdir -p /home/builder/pkgbuild
+          cp -a packaging/. /home/builder/pkgbuild/
+          chown -R builder:builder /home/builder/pkgbuild
+          runuser -u builder -- bash -lc 'cd ~/pkgbuild && makepkg --noconfirm --clean'
+
+      - name: Recoger artefacto
+        run: |
+          mkdir -p dist
+          cp /home/builder/pkgbuild/aria-xtrdownloader-*.pkg.tar.zst dist/
+          ls -la dist/
+
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Paquete Arch — ${{ github.ref_name }}"
+          body: |
+            Paquete `.pkg.tar.zst` compilado en CI (contenedor Arch oficial) desde la rama `arch`.
+
+            Instalar: `sudo pacman -U aria-xtrdownloader-*.pkg.tar.zst`
+            (las dependencias `aria2`, `gtk4` y `libnotify` las resuelve pacman).
+          files: dist/*.pkg.tar.zst
