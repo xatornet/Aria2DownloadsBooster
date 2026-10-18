@@ -230,7 +230,7 @@ fn pick_folder(parent: &gtk::Window, entry: &gtk::Entry) {
     });
 }
 
-fn dialog_add(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(String, i32)>>) {
+fn dialog_add(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(String, i32, bool)>>) {
     let win = dialog_shell(parent, tr("Nueva descarga", "New download"));
     let bx = win.child().and_then(|c| c.downcast::<gtk::Box>().ok()).unwrap();
 
@@ -313,7 +313,7 @@ fn dialog_add(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(
     win.present();
 }
 
-fn dialog_settings(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(String, i32)>>) {
+fn dialog_settings(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(String, i32, bool)>>) {
     let defaults = defaults.clone();
     let win = dialog_shell(parent, tr("Ajustes", "Settings"));
     let bx = win.child().and_then(|c| c.downcast::<gtk::Box>().ok()).unwrap();
@@ -338,6 +338,15 @@ fn dialog_settings(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefC
     dir_row.append(&browse);
     bx.append(&dir_row);
 
+    let tray_check = gtk::CheckButton::builder()
+        .label(tr(
+            "Minimizar a segundo plano al cerrar (sigue descargando; relanzar reabre la ventana)",
+            "Minimize to background on close (keeps downloading; relaunch reopens the window)",
+        ))
+        .build();
+    tray_check.set_active(defaults.borrow().2);
+    bx.append(&tray_check);
+
     let cancel = gtk::Button::builder().label(tr("Cancelar", "Cancel")).build();
     let save = gtk::Button::builder().label(tr("Guardar", "Save")).build();
     save.add_css_class("suggested");
@@ -351,12 +360,15 @@ fn dialog_settings(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefC
         save.connect_clicked(move |_| {
             let conn = conn_spin.value() as i32;
             let dir = de.text().trim().to_string();
+            let tray = tray_check.is_active();
             defaults.borrow_mut().0 = dir.clone();
             defaults.borrow_mut().1 = conn;
+            defaults.borrow_mut().2 = tray;
             let _ = cmd_tx.send(Cmd::SetSettings {
                 max_concurrent: max_spin.value() as i32,
                 default_connections: conn,
                 default_dir: if dir.is_empty() { None } else { Some(dir) },
+                minimize_to_tray: tray,
             });
             w.close();
         });
@@ -430,6 +442,25 @@ fn apply_row(ri: &RowInfo, w: &RowWidgets) {
 }
 
 // ------------------------------------------------------------------ ventana principal
+
+/// Instancia única (GtkApplication): la primera activate construye; las siguientes
+/// simplemente traen la ventana al frente (restaurar desde segundo plano).
+thread_local! {
+    static EXISTING: RefCell<Option<(gtk::ApplicationWindow, Sender<Cmd>)>> = RefCell::new(None);
+}
+
+pub fn already_open() -> bool {
+    EXISTING.with(|c| c.borrow().is_some())
+}
+
+pub fn present_existing() {
+    EXISTING.with(|c| {
+        if let Some((w, t)) = c.borrow().as_ref() {
+            let _ = t.send(Cmd::SetHidden(false));
+            w.present();
+        }
+    });
+}
 
 pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_tx: Sender<Cmd>) {
     let win = gtk::ApplicationWindow::builder()
@@ -538,13 +569,14 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
     win.set_child(Some(&root));
 
     // valores por defecto para los diálogos (se actualizan al guardar ajustes)
-    let defaults: Rc<RefCell<(String, i32)>> = Rc::new(RefCell::new((
+    let defaults: Rc<RefCell<(String, i32, bool)>> = Rc::new(RefCell::new((
         std::env::var("HOME")
             .map(|h| format!("{h}/Downloads"))
             .unwrap_or_else(|_| {
                 std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_else(|_| ".".into())
             }),
         16,
+        true,
     )));
 
     btn_add.connect_clicked({
@@ -577,6 +609,9 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
     // dreno del canal del worker cada 25 ms (sin API de canal de glib: robusta entre versiones)
     let ev_cell = Rc::new(RefCell::new(rx));
     let cmd_tx_events = cmd_tx.clone();
+    let win_ev = win.clone();
+    let quit_flag = Rc::new(std::cell::Cell::new(false));
+    let quit_flag_ev = quit_flag.clone();
     let _attached = glib::timeout_add_local(std::time::Duration::from_millis(25), move || {
       loop {
         let ev = match ev_cell.borrow().try_recv() {
@@ -629,28 +664,57 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
                     glib::ControlFlow::Break
                 });
             }
+            Event::HideWindow => {
+                quit_flag_ev.set(false);
+                let _ = cmd_tx_events.send(Cmd::SetHidden(true));
+                win_ev.hide();
+            }
             Event::Bye => app2.quit(),
         }
       }
       glib::ControlFlow::Continue
     });
 
-    // cierre: apaga el motor y sale (con fallback de 6 s)
+    // cierre de ventana: el worker decide (ocultar a segundo plano o apagar según ajuste).
     win.connect_close_request({
         let t = cmd_tx.clone();
         let a = app.clone();
+        let qf = quit_flag.clone();
         move |_| {
-            let _ = t.send(Cmd::Shutdown);
-            glib::timeout_add_local(std::time::Duration::from_millis(6000), {
+            qf.set(true);
+            let _ = t.send(Cmd::HideRequested);
+            // red de seguridad: si el worker cuelga, salir de verdad tras 8 s
+            glib::timeout_add_local(std::time::Duration::from_millis(8000), {
                 let a = a.clone();
+                let qf2 = qf.clone();
                 move || {
-                    a.quit();
+                    if qf2.get() {
+                        a.quit();
+                    }
                     glib::ControlFlow::Break
                 }
             });
             glib::Propagation::Stop
         }
     });
+
+    // Ctrl+Q con la ventana visible: salida real (deja de sondear y apaga el motor)
+    let keys = gtk::EventControllerKey::new();
+    keys.connect_key_pressed({
+        let t = cmd_tx.clone();
+        move |_, key, _code, mods| {
+            if key == gtk::gdk::Key::q && mods.contains(gtk::gdk::ModifierType::CONTROL_MASK) {
+                let _ = t.send(Cmd::Shutdown);
+                glib::Propagation::Stop
+            } else {
+                glib::Propagation::Proceed
+            }
+        }
+    });
+    win.add_controller(keys);
+
+    // registrar la instancia para que un relanzamiento la restaure
+    EXISTING.with(|c| *c.borrow_mut() = Some((win.clone(), cmd_tx.clone())));
 
     win.present();
 }

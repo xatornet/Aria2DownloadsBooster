@@ -12,6 +12,10 @@ pub struct Settings {
     pub max_concurrent_downloads: i32,
     pub default_connections: i32,
     pub default_dir: Option<String>,
+    /// Al cerrar la ventana, ocultar a segundo plano y seguir descargando.
+    pub minimize_to_tray: bool,
+    /// Ya se mostró una vez el aviso de "sigue activa en segundo plano".
+    pub tray_hint_shown: bool,
 }
 
 impl Default for Settings {
@@ -20,6 +24,8 @@ impl Default for Settings {
             max_concurrent_downloads: 3,
             default_connections: 16,
             default_dir: None,
+            minimize_to_tray: true,
+            tray_hint_shown: false,
         }
     }
 }

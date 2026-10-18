@@ -20,8 +20,12 @@ pub enum Cmd {
     Resume { id: String },
     Delete { id: String, delete_file: bool },
     OpenFolder { id: String },
-    SetSettings { max_concurrent: i32, default_connections: i32, default_dir: Option<String> },
+    SetSettings { max_concurrent: i32, default_connections: i32, default_dir: Option<String>, minimize_to_tray: bool },
     CleanupCompleted,
+    /// Cierre de ventana: el worker decide (ocultar a segundo plano o apagar).
+    HideRequested,
+    /// La UI informa de su visibilidad (para notificar completadas solo si oculta).
+    SetHidden(bool),
     Shutdown,
 }
 
@@ -66,6 +70,8 @@ pub enum Event {
     /// Tick de progreso; rows None = no tocar tarjetas (motor caído).
     Statuses { rows: Option<Vec<RowInfo>>, global_speed: String, heartbeat: String, engine: EngineInfo },
     Flash(String),
+    /// Ocultar la ventana principal (modo segundo plano).
+    HideWindow,
     Bye,
 }
 
@@ -74,6 +80,8 @@ pub enum Event {
 pub struct State {
     pub entries: Vec<Entry>,
     pub settings: Settings,
+    /// Ventana principal oculta (minimizada a segundo plano).
+    pub hidden: bool,
     dirty: bool,
 }
 
@@ -90,6 +98,7 @@ impl State {
         State {
             entries: d.entries,
             settings: if txt.is_empty() { Settings::default() } else { d.settings },
+            hidden: false,
             dirty: false,
         }
     }
@@ -134,6 +143,26 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
                     engine.stop_shutdown();
                     let _ = out.send(Event::Bye);
                     return;
+                }
+                Ok(Cmd::HideRequested) => {
+                    if !st.settings.minimize_to_tray {
+                        // ajuste desactivado ⇒ cerrar es apagar de verdad
+                        engine.stop_shutdown();
+                        let _ = out.send(Event::Bye);
+                        return;
+                    }
+                    if !st.settings.tray_hint_shown {
+                        st.settings.tray_hint_shown = true;
+                        st.save();
+                        desktop_notify(
+                            &tr("Aria-XTRDownloader sigue activa", "Aria-XTRDownloader is still running"),
+                            &tr(
+                                "Seguirá descargando en segundo plano.\nVuelve a lanzar la aplicación para reabrirla.",
+                                "It will keep downloading in the background.\nLaunch the app again to reopen it.",
+                            ),
+                        );
+                    }
+                    let _ = out.send(Event::HideWindow);
                 }
                 Ok(cmd) => handle_cmd(&cmd, &mut st, &mut engine, &out),
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => break,
@@ -348,8 +377,15 @@ fn poll(st: &mut State, engine: &Engine, out: &Sender<Event>, last_poll_err: &mu
                     .filter(|s| !s.is_empty())
                     .map(String::from);
 
+                let hidden_now = st.hidden;
                 let e = &mut st.entries[idx];
                 if status == "complete" {
+                    if hidden_now {
+                        desktop_notify(
+                            &tr("Descarga completada", "Download completed"),
+                            &format!("{} · {}", e.name, format_size(total as f64)),
+                        );
+                    }
                     e.completed = true;
                     e.status = "complete".into();
                     e.total = total;
@@ -589,11 +625,13 @@ fn handle_cmd(cmd: &Cmd, st: &mut State, engine: &mut Engine, out: &Sender<Event
             let dir = st.entries[idx].dir.clone();
             let _ = std::process::Command::new("xdg-open").arg(dir).spawn();
         }
-        Cmd::SetSettings { max_concurrent, default_connections, default_dir } => {
+        Cmd::SetSettings { max_concurrent, default_connections, default_dir, minimize_to_tray } => {
             st.settings = Settings {
                 max_concurrent_downloads: (*max_concurrent).clamp(1, 20),
                 default_connections: clamp_connections(*default_connections),
                 default_dir: default_dir.clone(),
+                minimize_to_tray: *minimize_to_tray,
+                tray_hint_shown: st.settings.tray_hint_shown,
             };
             if let Some(rpc) = engine.rpc() {
                 let _ = rpc.call(
@@ -609,6 +647,17 @@ fn handle_cmd(cmd: &Cmd, st: &mut State, engine: &mut Engine, out: &Sender<Event
             st.dirty = true;
             flush_model(st, out);
         }
-        Cmd::Shutdown => unreachable!(),
+        Cmd::SetHidden(h) => st.hidden = *h,
+        Cmd::Shutdown | Cmd::HideRequested => unreachable!(),
+    }
+}
+
+/// Notificación del escritorio (freedesktop). Silenciosa si notify-send no existe.
+fn desktop_notify(title: &str, body: &str) {
+    let r = std::process::Command::new("notify-send")
+        .args(["--app-name", "Aria-XTRDownloader", title, body])
+        .spawn();
+    if let Err(e) = r {
+        paths::ui_log_line(&format!("notify-send no disponible: {e}"));
     }
 }

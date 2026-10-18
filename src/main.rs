@@ -14,6 +14,11 @@ fn main() {
         .build();
 
     app.connect_activate(|app| {
+        // Instancia única: si ya hay ventana (quizá oculta en segundo plano), restaurarla.
+        if window::already_open() {
+            window::present_existing();
+            return;
+        }
         // UI → worker: mpsc de comandos. worker → UI: mpsc de eventos drenado por timeout.
         let (cmd_tx, cmd_rx) = std::sync::mpsc::channel();
         let (ev_tx, ev_rx) = std::sync::mpsc::channel::<worker::Event>();
