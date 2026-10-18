@@ -6,8 +6,7 @@
 
 Acelerador de descargas multi-hilo con interfaz **nativa** basado en **aria2**.
 
-<img width="1001" height="702" alt="imagen" src="https://github.com/user-attachments/assets/1ecd6954-aeac-43ce-941d-fe323b19bbf1" />
-
+<img width="1002" height="700" alt="imagen" src="https://github.com/user-attachments/assets/557779af-b2e3-4046-a0a0-bdcb788deaca" />
 
 ## Qué hace
 
@@ -36,7 +35,8 @@ Acelerador de descargas multi-hilo con interfaz **nativa** basado en **aria2**.
 ## Usar (sin compilar)
 
 Descarga el `.zip` de la última release, descomprime y ejecuta `Aria2DownloadsBooster.exe`
-(self-contained: no necesita .NET instalado).
+(self-contained: no necesita .NET instalado).
+
 
 > **Renombrado**: la app se llamaba *Aria-XTRDownloader*; si existían tus datos en
 > `%APPDATA%\Aria-XTRDownloader\`, se mueven solos al primer arranque al nuevo
