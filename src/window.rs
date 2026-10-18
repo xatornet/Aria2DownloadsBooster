@@ -613,6 +613,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
     let ev_cell = Rc::new(RefCell::new(rx));
     let cmd_tx_events = cmd_tx.clone();
     let win_ev = win.clone();
+    let defaults_ev = defaults.clone();
     let quit_flag = Rc::new(std::cell::Cell::new(false));
     let quit_flag_ev = quit_flag.clone();
     let _attached = glib::timeout_add_local(std::time::Duration::from_millis(25), move || {
@@ -671,6 +672,18 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
                 quit_flag_ev.set(false);
                 let _ = cmd_tx_events.send(Cmd::SetHidden(true));
                 win_ev.set_visible(false);
+            }
+            Event::PresentWindow => {
+                quit_flag_ev.set(false);
+                let _ = cmd_tx_events.send(Cmd::SetHidden(false));
+                win_ev.present();
+            }
+            Event::Settings { dir, connections, minimize_to_tray: tray } => {
+                // el worker manda los ajustes persistentes: diálogos siempre en verdad
+                let mut d = defaults_ev.borrow_mut();
+                d.0 = dir;
+                d.1 = connections;
+                d.2 = tray;
             }
             Event::Bye => app2.quit(),
         }

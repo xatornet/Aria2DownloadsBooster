@@ -3,6 +3,7 @@ mod i18n;
 mod models;
 mod paths;
 mod rpc;
+mod tray;
 mod window;
 mod worker;
 

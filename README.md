@@ -47,10 +47,18 @@ makepkg -si
 Instala `/usr/bin/aria-xtrdownloader`, entrada de menú de aplicaciones e icono
 (tema hicolor). Dependencias en tiempo de ejecución: `aria2`, `gtk4`, `libnotify`.
 
-## Segundo plano y notificaciones
+## Segundo plano, bandeja y notificaciones
 
 - **Cerrar la ventana no cierra la aplicación**: se oculta y sigue descargando en segundo plano
   (ajuste activable/desactivable). La primera vez avisa con una notificación del escritorio.
+- **Icono en la bandeja del sistema** (protocolo StatusNotifierItem sobre D-Bus, vía la librería
+  `ksni` — la implementación de referencia en Rust, probada en Plasma):
+  - **Clic izquierdo** (o menú → Abrir): restaura la ventana.
+  - **Menú → Salir**: cierre definitivo (apaga el motor aria2; el icono desaparece).
+  - KDE/XFCE/Cinnamon/LXQt, etc. En **GNOME** hace falta la extensión
+    *«AppIndicator and KStatusNotifierItem Support»*.
+  - El icono (`aria-xtrdownloader`) sale al estar **instalada** la app vía paquete (tema hicolor);
+    ejecutada suelta desde `target/` puede mostrarse con icono genérico.
 - Al terminar una descarga mientras la ventana está oculta, notifica *«Descarga completada»*
   (usa `notify-send` — paquete `libnotify`; si falta, se ignora en silencio).
 - **Relanzar la app restaura la ventana** (instancia única vía GtkApplication).
@@ -62,6 +70,7 @@ Instala `/usr/bin/aria-xtrdownloader`, entrada de menú de aplicaciones e icono
 |---|---|
 | `ARIA_XTR_DATA` | Redirige el directorio de datos (registry, logs, sesión) |
 | `ARIA_XTR_ENGINE` | Ruta a un binario `aria2c` alternativo |
+| `ARIA_XTR_NO_TRAY=1` | Desactiva por completo la bandeja SNI (diagnóstico) |
 
 ## Ficheros de datos
 
