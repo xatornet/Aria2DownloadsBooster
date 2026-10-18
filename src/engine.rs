@@ -96,6 +96,17 @@ impl Engine {
                 .stdout(Stdio::null())
                 .stderr(Stdio::piped());
 
+            // Garantía de vida: aria2c recibe SIGTERM si este proceso muere
+            // (kill -9, crash, logout). Equivalente al Job Object de Windows.
+            unsafe {
+                cmd.pre_exec(|| {
+                    if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM) != 0 {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    Ok(())
+                });
+            }
+
             let Ok(mut child) = cmd.spawn() else { continue };
 
             // Captura stderr para diagnóstico (aria2c escribe ahí sus errores de arranque)
@@ -126,7 +137,7 @@ impl Engine {
 
             match version {
                 Some(v) => {
-                    let _ = std::fs::write(paths::pid_file(), std::process::id().to_string());
+                    let _ = std::fs::write(paths::pid_file(), child.id().to_string());
                     self.rpc = Some(rpc);
                     self.port = port;
                     self.version = Some(v);
