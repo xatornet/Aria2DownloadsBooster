@@ -2,13 +2,14 @@
 
 > **⚡ Proyecto creado con IA.** Parte del código es generado por IA y curado/verificado por el autor.
 
-Acelerador de descargas sobre **aria2** con interfaz **nativa GTK4**: varias descargas a la vez
-con hasta **16 hilos por descarga**, pausa/reanudación que **sobrevive al cierre de la app**
-(continúa donde estaba usando los archivos de control `.aria2`) y recuperación automática si el
-motor cae.
-
+ Acelerador de descargas sobre **aria2** con interfaz **nativa GTK4**
+ 
 <img width="1308" height="983" alt="image" src="https://github.com/user-attachments/assets/2addd66a-b25b-4e33-9d38-890c244e4d0b" />
 
+## Qué hace
+- **16 hilos por descarga**
+- Pausa/reanudación que **sobrevive al cierre de la app** (continúa donde estaba usando los archivos de control `.aria2`)
+- Recuperación automática si el motor cae.
 
 ## Stack (rama `arch`)
 
