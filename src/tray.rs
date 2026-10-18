@@ -233,7 +233,7 @@ impl From<MenuNode> for Value<'static> {
         b = b.add_field(Value::from(n.id));
         b = b.add_field(Value::from(n.properties));
         b = b.add_field(Value::from(n.children));
-        Value::Structure(b.build())
+        Value::Structure(b.build().expect("menu leaf (structura estática, no puede fallar)"))
     }
 }
 
