@@ -1,5 +1,7 @@
 # Aria-XTRDownloader — edición Arch Linux (GTK4)
 
+**🇪🇸 Español** · [🇬🇧 English](README.en.md)
+
 > **⚡ Proyecto creado con IA.** Parte del código es generado por IA y curado/verificado por el autor.
 
  Acelerador de descargas sobre **aria2** con interfaz **nativa GTK4**
@@ -20,29 +22,22 @@
 | HTTP-RPC | TCP propio sobre localhost (HTTP/1.1, sin dependencias) |
 | Persistencia | `registry.json` en `~/.local/share/Aria-XTRDownloader/` |
 
-## Compilar y ejecutar en Arch
+## Instalación en Arch (elige una)
+
+**1) Como paquete Arch — descarga, compila e instala de una** (recomendado):
 
 ```bash
-sudo pacman -S --needed base-devel rust aria2 gtk4 libnotify
-git clone -b arch https://github.com/xatornet/XTRDownloader.git
-cd XTRDownloader
-cargo build --release
-./target/release/aria-xtrdownloader
+git clone -b arch https://github.com/xatornet/XTRDownloader.git && cd XTRDownloader/packaging && makepkg -si
 ```
 
-## Instalar como paquete Arch (recomendado)
+**2) Sin clonar el repo — una sola línea** (el PKGBUILD se descarga el código solo, rama `arch`):
 
 ```bash
-cd XTRDownloader/packaging
-makepkg -si
+wget https://raw.githubusercontent.com/xatornet/XTRDownloader/arch/packaging/PKGBUILD -O PKGBUILD && makepkg -si
 ```
 
-O sin clonar el repo (el PKGBUILD se descarga el código solo, rama `arch`):
-
-```bash
-wget https://raw.githubusercontent.com/xatornet/XTRDownloader/arch/packaging/PKGBUILD
-makepkg -si
-```
+> En ambos casos `makepkg -si` resuelve e instala las dependencias
+> (primera vez en el sistema puede pedir `sudo pacman -S --needed base-devel`).
 
 Instala `/usr/bin/aria-xtrdownloader`, entrada de menú de aplicaciones e icono
 (tema hicolor). Dependencias en tiempo de ejecución: `aria2`, `gtk4`, `libnotify`.
