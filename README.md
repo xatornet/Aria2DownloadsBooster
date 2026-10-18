@@ -1,5 +1,7 @@
 # ⚡ Aria-XTRDownloader — edición Windows
 
+**🇪🇸 Español** · [🇬🇧 English](README.en.md)
+
 > **Este proyecto está creado CON IA** (código generado por IA y curado/verificado por el autor).
 
 Acelerador de descargas multi-hilo con interfaz **nativa** basado en **aria2**.
