@@ -57,7 +57,7 @@ public static class Tray
         var icon = new TrayIcon
         {
             Icon = AppIcon(),
-            ToolTipText = "Aria-XTRDownloader",
+            ToolTipText = "Aria2 Downloads Booster",
             Menu = menu,
         };
         icon.Clicked += (_, _) => OpenMainWindow();
@@ -80,7 +80,7 @@ public static class Tray
         try
         {
             return new WindowIcon(AssetLoader.Open(
-                new Uri("avares://AriaXtrDownloader/Assets/icon.ico")));
+                new Uri("avares://Aria2DownloadsBooster/Assets/icon.ico")));
         }
         catch
         {

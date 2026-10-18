@@ -4,7 +4,7 @@
              RequestedThemeVariant="Dark">
   <Application.Styles>
     <FluentTheme />
-    <StyleInclude Source="avares://AriaXtrDownloader/Assets/Styles.axaml" />
+    <StyleInclude Source="avares://Aria2DownloadsBooster/Assets/Styles.axaml" />
   </Application.Styles>
 
   <Application.Resources>

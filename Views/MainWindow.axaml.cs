@@ -16,7 +16,7 @@ public partial class MainWindow : Window
         try
         {
             Icon = new WindowIcon(AssetLoader.Open(
-                new Uri("avares://AriaXtrDownloader/Assets/icon.ico")));
+                new Uri("avares://Aria2DownloadsBooster/Assets/icon.ico")));
         }
         catch (Exception ex) { Services.UiLog.Write("icono ventana no disponible: " + ex.Message); }
         Closed += (_, _) => (DataContext as MainWindowViewModel)?.ShutdownEngine();

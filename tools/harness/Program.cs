@@ -5,11 +5,11 @@ using System.Diagnostics;
 using System.Text.Json;
 using AriaXtr.Services;
 
-// Datos aislados vía ARIA_XTR_DATA (lee la ruta REAL antes, sin cachear GetFolderPath)
+// Datos aislados vía A2DB_DATA (lee la ruta REAL antes, sin cachear GetFolderPath)
 var realAppData = Environment.GetEnvironmentVariable("APPDATA")
                   ?? throw new InvalidOperationException("APPDATA no definido");
 var tempAppData = Path.Combine(Path.GetTempPath(), "ariaxtr-harness-" + Guid.NewGuid().ToString("N")[..8]);
-Environment.SetEnvironmentVariable("ARIA_XTR_DATA", tempAppData);
+Environment.SetEnvironmentVariable("A2DB_DATA", tempAppData);
 
 // Copiar el binario aria2c ya instalado por la app
 var realEngine = Path.Combine(realAppData, "Aria-XTRDownloader", "engine", "aria2c.exe");

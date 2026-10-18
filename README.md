@@ -1,4 +1,4 @@
-# ⚡ Aria-XTRDownloader — edición Windows
+# ⚡ Aria2 Downloads Booster — edición Windows
 
 **🇪🇸 Español** · [🇬🇧 English](README.en.md)
 
@@ -30,13 +30,17 @@ Acelerador de descargas multi-hilo con interfaz **nativa** basado en **aria2**.
 |---|---|
 | Lenguaje / UI | **C# (.NET 8) + Avalonia 11** (interfaz nativa, no webview) |
 | Motor | **aria2c** en modo demonio JSON-RPC (puertos 6800-6804, token aleatorio por sesión) |
-| Persistencia | `registry.json` en `%APPDATA%\Aria-XTRDownloader\` (fuente de verdad del resume) |
-| Tramas | `%APPDATA%\Aria-XTRDownloader\ui.log` y `aria2c.log` |
+| Persistencia | `registry.json` en `%APPDATA%\Aria2DownloadsBooster\` (fuente de verdad del resume) |
+| Tramas | `%APPDATA%\Aria2DownloadsBooster\ui.log` y `aria2c.log` |
 
 ## Usar (sin compilar)
 
-Descarga el `.zip` de la última release, descomprime y ejecuta `AriaXtrDownloader.exe`
-(self-contained: no necesita .NET instalado).
+Descarga el `.zip` de la última release, descomprime y ejecuta `Aria2DownloadsBooster.exe`
+(self-contained: no necesita .NET instalado).
+
+> **Renombrado**: la app se llamaba *Aria-XTRDownloader*; si existían tus datos en
+> `%APPDATA%\Aria-XTRDownloader\`, se mueven solos al primer arranque al nuevo
+> `%APPDATA%\Aria2DownloadsBooster\` (descargas, ajustes e historial intactos).
 
 ## Compilar
 

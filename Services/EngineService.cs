@@ -20,7 +20,7 @@ public enum EngineState { Missing, Starting, Running, Error }
 public sealed class EngineService : IDisposable
 {
     public const int RpcPort = 6800;
-    private static readonly string Secret = "aria-xtr-" + Guid.NewGuid().ToString("N");
+    private static readonly string Secret = "a2db-" + Guid.NewGuid().ToString("N");
 
     private Process? _proc;
     private AriaRpc? _rpc;
@@ -401,7 +401,7 @@ public sealed class EngineService : IDisposable
         {
             if (_job == IntPtr.Zero)
             {
-                _job = CreateJobObjectW(IntPtr.Zero, "AriaXtrDownloader_daemon_job");
+                _job = CreateJobObjectW(IntPtr.Zero, "Aria2DownloadsBooster_daemon_job");
                 if (_job == IntPtr.Zero)
                 {
                     UiLog.Write($"CreateJobObjectW falló err={Marshal.GetLastWin32Error()}");

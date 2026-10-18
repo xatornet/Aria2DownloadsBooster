@@ -43,7 +43,7 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private bool _hasCompleted;
     [ObservableProperty] private bool _showCompletedList = true;
 
-    public string FooterText { get; } = $"Aria-XTRDownloader v1.0 · datos: {AppPaths.BaseDir}";
+    public string FooterText { get; } = $"Aria2 Downloads Booster v1.1 · datos: {AppPaths.BaseDir}";
 
     public string DefaultDir => _reg.Settings.DefaultDir
         ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

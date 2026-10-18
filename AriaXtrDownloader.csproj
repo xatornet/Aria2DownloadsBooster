@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>AriaXtrDownloader</AssemblyName>
+    <AssemblyName>Aria2DownloadsBooster</AssemblyName>
     <RootNamespace>AriaXtr</RootNamespace>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -11,9 +11,9 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon Condition="Exists('Assets\icon.ico')">Assets\icon.ico</ApplicationIcon>
     <SelfContained>false</SelfContained>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Company>XTR</Company>
-    <Product>Aria-XTRDownloader</Product>
+    <Product>Aria2 Downloads Booster</Product>
     <Description>Acelerador de descargas basado en aria2</Description>
   </PropertyGroup>
 

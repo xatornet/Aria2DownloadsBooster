@@ -96,7 +96,7 @@ public static class Loc
 
     private static readonly Dictionary<string, string> _es = new()
     {
-        ["app_title"] = "Aria-XTRDownloader",
+        ["app_title"] = "Aria2 Downloads Booster",
         ["new_download"] = "+ Nueva descarga",
         ["settings_btn"] = "Ajustes",
         ["downloads_label"] = "Descargas",
@@ -131,9 +131,9 @@ public static class Loc
         ["default_folder"] = "Carpeta por defecto",
         ["save"] = "Guardar",
         ["tray_setting"] = "Minimizar a la bandeja al cerrar (sigue descargando en segundo plano)",
-        ["tray_hint_title"] = "Aria-XTRDownloader sigue activo",
+        ["tray_hint_title"] = "Aria2 Downloads Booster sigue activo",
         ["tray_hint_body"] = "La aplicación se ha minimizado a la bandeja del sistema y seguirá descargando. Haz doble clic en el icono ⚡ junto al reloj para volver a abrirla.",
-        ["tray_open"] = "Abrir Aria-XTRDownloader",
+        ["tray_open"] = "Abrir Aria2 Downloads Booster",
         ["tray_exit"] = "Salir",
         ["download_done_title"] = "Descarga completada",
         ["delete_title"] = "Confirmar eliminación",
@@ -150,7 +150,7 @@ public static class Loc
 
     private static readonly Dictionary<string, string> _en = new()
     {
-        ["app_title"] = "Aria-XTRDownloader",
+        ["app_title"] = "Aria2 Downloads Booster",
         ["new_download"] = "+ New download",
         ["settings_btn"] = "Settings",
         ["downloads_label"] = "Downloads",
@@ -185,9 +185,9 @@ public static class Loc
         ["default_folder"] = "Default folder",
         ["save"] = "Save",
         ["tray_setting"] = "Minimize to tray on close (keeps downloading in the background)",
-        ["tray_hint_title"] = "Aria-XTRDownloader is still running",
+        ["tray_hint_title"] = "Aria2 Downloads Booster is still running",
         ["tray_hint_body"] = "The app was minimized to the system tray and will keep downloading. Double-click the ⚡ icon next to the clock to open it again.",
-        ["tray_open"] = "Open Aria-XTRDownloader",
+        ["tray_open"] = "Open Aria2 Downloads Booster",
         ["tray_exit"] = "Exit",
         ["download_done_title"] = "Download completed",
         ["delete_title"] = "Confirm delete",

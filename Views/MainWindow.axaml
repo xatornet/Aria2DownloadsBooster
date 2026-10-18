@@ -16,7 +16,7 @@
     <Border Grid.Row="0" Background="{StaticResource HeaderGradient}" Padding="22,14,18,14">
       <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="14">
         <StackPanel Spacing="2">
-          <TextBlock Classes="title" Text="⚡ Aria-XTRDownloader" />
+          <TextBlock Classes="title" Text="⚡ Aria2 Downloads Booster" />
           <TextBlock Classes="subtitle" Text="{Binding EngineStatusText}" />
           <TextBlock Classes="subtitle" Text="{Binding LastActionMessage}" Foreground="#FFC96B" />
         </StackPanel>

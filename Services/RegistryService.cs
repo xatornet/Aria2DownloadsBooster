@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace AriaXtr.Services;
 
 /// <summary>
-/// Persistencia en JSON (AppData/Aria-XTRDownloader). Es la fuente de verdad para
+/// Persistencia en JSON (AppData/Aria2DownloadsBooster). Es la fuente de verdad para
 /// mostrar y reanudar descargas cortadas aunque se cierre la app o mate aria2c.
 /// </summary>
 public sealed class RegistryService
