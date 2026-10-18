@@ -1,7 +1,6 @@
-bin/
-obj/
+/target
+/pkg
 dist/
 *.user
-.vs/
-tools/*/bin/
-tools/*/obj/
+err.log
+out.log
