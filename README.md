@@ -1,64 +1,63 @@
-# ⚡ Aria-XTRDownloader
+# ⚡ Aria-XTRDownloader — edición Windows
 
-Acelerador de descargas multiplataforma (Windows y Linux) basado en **aria2**,
-con interfaz nativa en **Avalonia (C#/.NET)**.
+> **Este proyecto está creado CON IA** (código generado por IA y curado/verificado por el autor).
 
-![plataformas](https://img.shields.io/badge/Windows-x64-0078D6)
-![plataformas](https://img.shields.io/badge/Linux-x64-FCC624)
-![stack](https://img.shields.io/badge/Avalonia-11.3-8B5CF6)
+Acelerador de descargas multi-hilo con interfaz **nativa** basado en **aria2**.
 
-## Características
+## Qué hace
 
-- 🚀 **Máxima velocidad**: hasta **16 hilos/conexiones paralelas por descarga**
-  (`-x16 -s16 -k1M`), varios espejos (una URL por línea = mismo archivo).
-- ⏸️ **Pausar y reanudar**, incluso **después de cerrar la aplicación**:
-  el registro local (`AppData/Aria-XTRDownloader/registry.json`) guarda cada
-  descarga y aria2 continúa usando sus archivos de control `.aria2`.
-- 📋 Lista de descargas previas sin terminar, con estado, tamaño, velocidad y ETA.
-- 🖥️ **Motor aria2 por sistema operativo**: la app detecta su SO y descarga
-  automáticamente el binario que corresponde en su primera ejecución:
-  - Windows → build oficial 1.37.0 (SourceForge, con mirrors de respaldo)
-  - Linux → build estático amd64 (P3TERX Aria2-Pro-Core)
-- 🌐 Interfaz oscura moderna (FluentTheme), en **español** con detección de
-  inglés del sistema.
+- Pide un **enlace** (uno o varios como espejos) y una **carpeta de destino**, y descarga a la
+  **velocidad máxima** con hasta **16 conexiones simultáneas** por descarga.
+- **Pausa y reanuda incluso tras cerrar la aplicación**: la lista de descargas inconclusas
+  sobrevive al cierre y cada reanudación **continúa donde estaba** (usa los archivos de control
+  `.aria2`; nunca re-descarga desde cero).
+- **Recuperación automática**: si el motor aria2 cae o se reinicia, las descargas activas se
+  re-añaden solas y siguen.
+- Cada tarjeta muestra en vivo: progreso, tamaño, **velocidad**, **hilos en uso** (8/16),
+  **tiempo restante** y **qué está haciendo aria2 en cada momento** (resolviendo DNS,
+  preparando, recibiendo datos, en cola esperando hueco, reintentando…).
+- Descarga el binario aria2c correcto automáticamente (con espejos) si falta.
+- Interfaz en español o inglés según el idioma del sistema. Tema oscuro.
 
-## Uso
+## Tecnología
 
-1. Lanzar la app. Si falta el motor, el banner ofrece **«Descargar motor aria2»**.
-2. «+ Nueva descarga»: pegar URL(es), elegir carpeta, ajustar hilos (1–16).
-3. Pausar/reanudar con los botones de cada tarjeta; borrar con confirmación
-   (opción de borrar también el archivo parcial).
-4. Cerrar la app cuando quieras: las descargas quedan guardadas y podrán
-   reanudarse al volver.
+| Capa | Detalle |
+|---|---|
+| Lenguaje / UI | **C# (.NET 8) + Avalonia 11** (interfaz nativa, no webview) |
+| Motor | **aria2c** en modo demonio JSON-RPC (puertos 6800-6804, token aleatorio por sesión) |
+| Persistencia | `registry.json` en `%APPDATA%\Aria-XTRDownloader\` (fuente de verdad del resume) |
+| Tramas | `%APPDATA%\Aria-XTRDownloader\ui.log` y `aria2c.log` |
+
+## Usar (sin compilar)
+
+Descarga el `.zip` de la última release, descomprime y ejecuta `AriaXtrDownloader.exe`
+(self-contained: no necesita .NET instalado).
 
 ## Compilar
 
-```bash
-dotnet build -c Release                          # binario local
-dotnet publish -c Release -r win-x64  --self-contained true /p:PublishSingleFile=true -o dist/portable-win-x64
-dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -o dist/portable-linux-x64
+```powershell
+dotnet publish AriaXtrDownloader.csproj -c Release -r win-x64 --self-contained true `
+  /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o dist\portable-win-x64
 ```
 
-> El publish de Linux debe ejecutarse en Linux (o WSL). En distros con
-> `aria2c` del sistema también puedes copiarlo a
-> `~/.config/Aria-XTRDownloader/engine/aria2c` (o en Windows a
-> `%APPDATA%/Aria-XTRDownloader/engine/aria2c.exe`).
+## Builds a petición (GitHub Actions)
 
-## Arquitectura
+En la pestaña **Actions → «Build Windows» → Run workflow** se compila el EXE portable;
+si la compilación tiene éxito, el `.zip` se publica automáticamente en **Releases**.
 
-- **Motor**: demonio `aria2c` con JSON-RPC local (puerto 6800 + token aleatorio).
-- **Registro propio**: fuente de verdad de las descargas; al reanudar una
-  huérfana se re-añade con `continue=true` y aria2 retoma por su control `.aria2`.
-- **Parada limpia**: `aria2.shutdown` + `--save-session` de respaldo.
+## Notas de diseño (bugs de aria2 ya resueltos)
 
-## Estructura
+- `--file-allocation=none` en Windows (con `falloc`/`prealloc`, sin privilegios de admin aria2
+  rellena el archivo de ceros y **bloquea el demonio entero**).
+- `system.multicall` en JSON-RPC: token como primer parámetro de **cada sub-llamada** y resultados
+  en forma `[valor]`; `aria2.tellWaiting` está roto con rpc-secret y **nunca se usa**.
+- Un GID desaparecido (`"GID … is not found"`) se detecta y la descarga se re-añade con
+  `continue=true`.
 
-```
-Program.cs / App.axaml         Punto de entrada
-Services/EngineService.cs      Descarga SO→binario, arranque/parada del demonio
-Services/AriaRpc.cs            Cliente JSON-RPC (multicall)
-Services/RegistryService.cs    Persistencia JSON (registro + ajustes)
-Services/DownloadVm.cs         Estado por descarga para las tarjetas
-ViewModels/MainWindowViewModel polling 1 s, pausar/reanudar/reañadir
-Views/                         MainWindow + diálogos (añadir/ajustes/borrar)
-```
+## Licencia
+
+MIT
+
+---
+
+*Rama `arch`: versión para Arch Linux con UI nativa **GTK4 (Rust + gtk4-rs)** en desarrollo.*

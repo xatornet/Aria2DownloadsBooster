@@ -1,0 +1,47 @@
+name: Build Windows
+
+# Build a petición: Actions → Build Windows → Run workflow.
+# Si la compilación tiene éxito, el .zip se publica en Releases.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish portable EXE (win-x64, self-contained, single-file)
+        run: >
+          dotnet publish AriaXtrDownloader.csproj -c Release -r win-x64
+          --self-contained true
+          /p:PublishSingleFile=true
+          /p:IncludeNativeLibrariesForSelfExtract=true
+          -o dist\portable-win-x64
+
+      - name: Compress
+        run: |
+          Compress-Archive -Path dist\portable-win-x64\* -DestinationPath AriaXtrDownloader-win-x64.zip
+
+      - name: Upload artifact (siempre)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AriaXtrDownloader-win-x64
+          path: AriaXtrDownloader-win-x64.zip
+
+      - name: Publicar release (solo si el build tuvo éxito)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-build-${{ github.run_number }}
+          name: Aria-XTRDownloader (Windows) build ${{ github.run_number }}
+          body: Build portable auto-generado por GitHub Actions (win-x64, self-contained).
+          files: AriaXtrDownloader-win-x64.zip
+          make_latest: false
