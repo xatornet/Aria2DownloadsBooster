@@ -465,13 +465,13 @@ pub fn present_existing() {
 pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_tx: Sender<Cmd>) {
     let win = gtk::ApplicationWindow::builder()
         .application(app)
-        .title("⚡ Aria-XTRDownloader")
+        .title("⚡ Aria2 Downloads Booster")
         .default_width(1000)
         .default_height(740)
         .build();
     // Icono del tema (instalado por el paquete en hicolor/scalable/apps);
     // sin instalación queda el icono por defecto — sin coste.
-    win.set_icon_name(Some("aria-xtrdownloader"));
+    win.set_icon_name(Some("aria2-downloads-booster"));
 
     let provider = gtk::CssProvider::new();
     provider.load_from_data(include_str!("style.css"));
@@ -483,7 +483,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
     );
 
     let hb = gtk::HeaderBar::builder().show_title_buttons(true).build();
-    let title = gtk::Label::new(Some("⚡ Aria-XTRDownloader"));
+    let title = gtk::Label::new(Some("⚡ Aria2 Downloads Booster"));
     title.add_css_class("title-4");
     hb.pack_start(&title);
     let btn_settings = gtk::Button::builder().label(tr("⚙ Ajustes", "⚙ Settings")).build();

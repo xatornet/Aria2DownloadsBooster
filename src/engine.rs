@@ -1,6 +1,6 @@
 //! Ciclo de vida del demonio aria2c (paridad con EngineService.cs de la app Windows).
 //! En Arch se usa el aria2c del sistema (`sudo pacman -S aria2`); la variable
-//! ARIA_XTR_ENGINE permite señalar un binario alternativo.
+//! A2DB_ENGINE permite señalar un binario alternativo.
 
 use std::io::BufRead;
 use std::os::unix::process::CommandExt;
@@ -40,7 +40,7 @@ impl Engine {
             port: 0,
             child: None,
             rpc: None,
-            secret: format!("aria-xtr-{}", paths::random_hex(16)),
+            secret: format!("a2db-{}", paths::random_hex(16)),
         }
     }
 
@@ -52,9 +52,9 @@ impl Engine {
         self.rpc.as_ref()
     }
 
-    /// Búsqueda del binario: ARIA_XTR_ENGINE → PATH → /usr/bin/aria2c.
+    /// Búsqueda del binario: A2DB_ENGINE → PATH → /usr/bin/aria2c.
     pub fn binary() -> Option<PathBuf> {
-        if let Ok(p) = std::env::var("ARIA_XTR_ENGINE") {
+        if let Ok(p) = std::env::var("A2DB_ENGINE") {
             let pb = PathBuf::from(&p);
             if is_executable(&pb) {
                 return Some(pb);
@@ -155,7 +155,7 @@ impl Engine {
 
         self.state = EngineState::Error;
         self.last_error = format!(
-            "{} ~/.local/share/Aria-XTRDownloader/aria2c.log",
+            "{} ~/.local/share/Aria2DownloadsBooster/aria2c.log",
             tr("No se pudo arrancar aria2c (puertos 6800-6804). Revisa",
                "Could not start aria2c (ports 6800-6804). Check")
         );

@@ -11,7 +11,7 @@ use gtk::gio::prelude::*;
 
 fn main() {
     let app = gtk::Application::builder()
-        .application_id("io.ariaxtr.downloader")
+        .application_id("net.xatornet.aria2downloadsbooster")
         .build();
 
     app.connect_activate(|app| {

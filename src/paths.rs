@@ -1,9 +1,9 @@
-//! Rutas de datos (XDG), con redirección opcional vía ARIA_XTR_DATA (paridad con la app Windows).
+//! Rutas de datos (XDG), con redirección opcional vía A2DB_DATA (paridad con la app Windows).
 
 use std::path::PathBuf;
 
 pub fn base_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("ARIA_XTR_DATA") {
+    if let Ok(dir) = std::env::var("A2DB_DATA") {
         if !dir.is_empty() {
             return PathBuf::from(dir);
         }
@@ -14,10 +14,34 @@ pub fn base_dir() -> PathBuf {
             let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
             PathBuf::from(home).join(".local/share")
         });
-    data.join("Aria-XTRDownloader")
+    data.join("Aria2DownloadsBooster")
+}
+
+/// El antiguo nombre (pre-renombre a Aria2 Downloads Booster): si aún existe y el
+/// nuevo no, se MIGRA el directorio completo (registry, logs, sesión) sin perder nada.
+fn migrate_legacy_dir() {
+    let new = base_dir();
+    if new.exists() {
+        return;
+    }
+    let old = match std::env::var("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .ok()
+        .or_else(|| std::env::var("HOME").ok().map(|h| PathBuf::from(h).join(".local/share")))
+    {
+        Some(data) => data.join("Aria-XTRDownloader"),
+        None => return,
+    };
+    if old.exists() {
+        let _parent = new.parent();
+        if std::fs::rename(&old, &new).is_ok() {
+            eprintln!("[a2db] datos migrados: {} → {}", old.display(), new.display());
+        }
+    }
 }
 
 pub fn ensure_base() {
+    migrate_legacy_dir();
     let _ = std::fs::create_dir_all(base_dir());
 }
 

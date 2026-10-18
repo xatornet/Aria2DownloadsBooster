@@ -4,7 +4,7 @@
 //! durante años) en lugar de serializar D-Bus a mano: la iteración anterior con zbus directo
 //! tumbaba plasmashell al leer el layout dbusmenu artesanal.
 //!
-//! Se puede desactivar por completo con la variable de entorno `ARIA_XTR_NO_TRAY=1`
+//! Se puede desactivar por completo con la variable de entorno `A2DB_NO_TRAY=1`
 //! (diagnóstico: si algo falla, comprobar que sin bandeja la app es estable).
 
 use std::sync::mpsc::Sender;
@@ -22,7 +22,7 @@ pub(crate) struct XtrTray {
 
 impl ksni::Tray for XtrTray {
     fn id(&self) -> String {
-        "aria-xtrdownloader".into()
+        "aria2-downloads-booster".into()
     }
 
     fn category(&self) -> Category {
@@ -30,7 +30,7 @@ impl ksni::Tray for XtrTray {
     }
 
     fn title(&self) -> String {
-        "Aria-XTRDownloader".into()
+        "Aria2 Downloads Booster".into()
     }
 
     fn status(&self) -> Status {
@@ -38,13 +38,13 @@ impl ksni::Tray for XtrTray {
     }
 
     fn icon_name(&self) -> String {
-        "aria-xtrdownloader".into()
+        "aria2-downloads-booster".into()
     }
 
     fn tool_tip(&self) -> ToolTip {
         ToolTip {
-            icon_name: "aria-xtrdownloader".into(),
-            title: "Aria-XTRDownloader".into(),
+            icon_name: "aria2-downloads-booster".into(),
+            title: "Aria2 Downloads Booster".into(),
             description: tr(
                 "Descargando en segundo plano. Clic para abrir.",
                 "Downloading in the background. Click to open.",
@@ -69,7 +69,7 @@ impl ksni::Tray for XtrTray {
         let tx_quit = self.events.clone();
         vec![
             StandardItem {
-                label: tr("Abrir Aria-XTRDownloader", "Open Aria-XTRDownloader").to_string(),
+                label: tr("Abrir Aria2 Downloads Booster", "Open Aria2 Downloads Booster").to_string(),
                 activate: Box::new(move |_this| {
                     crate::paths::ui_log_line("tray: menú Abrir → mostrar ventana");
                     let _ = tx_open.send(TrayEvent::ShowWindow);

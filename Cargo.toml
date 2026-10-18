@@ -1,5 +1,5 @@
 [package]
-name = "aria-xtrdownloader"
+name = "aria2-downloads-booster"
 version = "1.0.0"
 edition = "2021"
 description = "Acelerador de descargas (aria2) con interfaz GTK4 para Arch Linux"

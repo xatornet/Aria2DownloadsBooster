@@ -134,7 +134,7 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
     let mut last_poll_err = String::new();
 
     // Bandeja SNI (ksni): vive mientras el ajuste minimize_to_tray esté activo.
-    // Kill switch de diagnóstico: ARIA_XTR_NO_TRAY=1 → nunca se levanta la bandeja.
+    // Kill switch de diagnóstico: A2DB_NO_TRAY=1 → nunca se levanta la bandeja.
     let (tray_tx, tray_rx) = std::sync::mpsc::channel::<TrayEvent>();
     let mut tray = TrayCtl::new();
     tray.sync(st.settings.minimize_to_tray, &tray_tx);
@@ -185,7 +185,7 @@ pub fn run(cmds: Receiver<Cmd>, out: Sender<Event>) {
                         st.settings.tray_hint_shown = true;
                         st.save();
                         desktop_notify(
-                            &tr("Aria-XTRDownloader sigue activa", "Aria-XTRDownloader is still running"),
+                            &tr("Aria2 Downloads Booster sigue activa", "Aria2 Downloads Booster is still running"),
                             &tr(
                                 "Seguirá descargando en segundo plano.\nVuelve a lanzar la aplicación para reabrirla.",
                                 "It will keep downloading in the background.\nLaunch the app again to reopen it.",
@@ -710,7 +710,7 @@ impl TrayCtl {
 
     /// Enciende/apaga el icono según el ajuste vigente (idempotente).
     fn sync(&mut self, enabled: bool, tx: &Sender<TrayEvent>) {
-        let blocked = std::env::var("ARIA_XTR_NO_TRAY").is_ok();
+        let blocked = std::env::var("A2DB_NO_TRAY").is_ok();
         if enabled && !blocked && self.handle.is_none() {
             self.handle = Some(crate::tray::TrayHandle::spawn(tx.clone()));
         } else if (!enabled || blocked) && self.handle.is_some() {
@@ -746,7 +746,7 @@ fn send_settings(st: &State, out: &Sender<Event>) {
 /// Notificación del escritorio (freedesktop). Silenciosa si notify-send no existe.
 fn desktop_notify(title: &str, body: &str) {
     let r = std::process::Command::new("notify-send")
-        .args(["--app-name", "Aria-XTRDownloader", title, body])
+        .args(["--app-name", "Aria2 Downloads Booster", title, body])
         .spawn();
     if let Err(e) = r {
         paths::ui_log_line(&format!("notify-send no disponible: {e}"));

@@ -1,4 +1,4 @@
-# Aria-XTRDownloader — Arch Linux edition (GTK4)
+# Aria2 Downloads Booster — Arch Linux edition (GTK4)
 
 [🇪🇸 Español](README.md) · **🇬🇧 English**
 
@@ -20,7 +20,7 @@
 | UI | **Rust + gtk4-rs** (GTK ≥ 4.10, custom dark CSS) |
 | Engine | **aria2c** as a JSON-RPC daemon (ports 6800-6804) |
 | HTTP-RPC | Custom TCP over localhost (HTTP/1.1, no dependencies) |
-| Persistence | `registry.json` in `~/.local/share/Aria-XTRDownloader/` |
+| Persistence | `registry.json` in `~/.local/share/Aria2DownloadsBooster/` |
 
 ## Installation on Arch (pick one)
 
@@ -39,8 +39,12 @@ wget https://raw.githubusercontent.com/xatornet/XTRDownloader/arch/packaging/PKG
 > In both cases `makepkg -si` resolves and installs the dependencies
 > (on a fresh system it may first ask for `sudo pacman -S --needed base-devel`).
 
-Installs `/usr/bin/aria-xtrdownloader`, an applications-menu entry and the icon
+Installs `/usr/bin/aria2-downloads-booster`, an applications-menu entry and the icon
 (hicolor theme). Runtime dependencies: `aria2`, `gtk4`, `libnotify`.
+
+> **Renamed**: the app used to be called *Aria-XTRDownloader*; data migrates automatically on
+> first launch (`~/.local/share/Aria-XTRDownloader/` → `~/.local/share/Aria2DownloadsBooster/`).
+> The package replaces the old `aria-xtrdownloader` one automatically.
 
 ## Background mode, tray and notifications
 
@@ -52,7 +56,7 @@ Installs `/usr/bin/aria-xtrdownloader`, an applications-menu entry and the icon
   - **Menu → Quit**: definitive shutdown (stops the aria2 engine; the icon disappears).
   - KDE/XFCE/Cinnamon/LXQt, etc. On **GNOME** you need the
     *«AppIndicator and KStatusNotifierItem Support»* extension.
-  - The icon (`aria-xtrdownloader`) shows properly when the app is **installed** as a package
+  - The icon (`aria2-downloads-booster`) shows properly when the app is **installed** as a package
     (hicolor theme); running it straight from `target/` may show a generic icon.
 - When a download finishes while the window is hidden, it notifies *«Download completed»*
   (uses `notify-send` — `libnotify`; silently ignored if missing).
@@ -63,15 +67,15 @@ Installs `/usr/bin/aria-xtrdownloader`, an applications-menu entry and the icon
 
 | Variable | Effect |
 |---|---|
-| `ARIA_XTR_DATA` | Redirects the data directory (registry, logs, session) |
-| `ARIA_XTR_ENGINE` | Path to an alternative `aria2c` binary |
-| `ARIA_XTR_NO_TRAY=1` | Disables the SNI tray entirely (diagnostics) |
+| `A2DB_DATA` | Redirects the data directory (registry, logs, session) |
+| `A2DB_ENGINE` | Path to an alternative `aria2c` binary |
+| `A2DB_NO_TRAY=1` | Disables the SNI tray entirely (diagnostics) |
 
 ## Data files
 
-- `~/.local/share/Aria-XTRDownloader/registry.json` — download list (source of truth for resume)
-- `~/.local/share/Aria-XTRDownloader/aria2c.log` — engine log
-- `~/.local/share/Aria-XTRDownloader/ui.log` — app traces (diagnostics)
+- `~/.local/share/Aria2DownloadsBooster/registry.json` — download list (source of truth for resume)
+- `~/.local/share/Aria2DownloadsBooster/aria2c.log` — engine log
+- `~/.local/share/Aria2DownloadsBooster/ui.log` — app traces (diagnostics)
 
 ## Status
 

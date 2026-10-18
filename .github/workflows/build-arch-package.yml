@@ -41,7 +41,7 @@ jobs:
       - name: Recoger artefacto
         run: |
           mkdir -p dist
-          cp /home/builder/pkgbuild/aria-xtrdownloader-[0-9]*.pkg.tar.zst dist/
+          cp /home/builder/pkgbuild/aria2-downloads-booster-[0-9]*.pkg.tar.zst dist/
           ls -la dist/
 
       - name: Publicar en Releases
@@ -51,6 +51,7 @@ jobs:
           body: |
             Paquete `.pkg.tar.zst` compilado en CI (contenedor Arch oficial) desde la rama `arch`.
 
-            Instalar: `sudo pacman -U aria-xtrdownloader-*.pkg.tar.zst`
+            Instalar: `sudo pacman -U aria2-downloads-booster-*.pkg.tar.zst`
             (las dependencias `aria2`, `gtk4` y `libnotify` las resuelve pacman).
+            Sustituye automáticamente al antiguo paquete `aria-xtrdownloader`.
           files: dist/*.pkg.tar.zst
