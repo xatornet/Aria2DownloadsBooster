@@ -1,6 +1,8 @@
 /target
 /pkg
-dist/
+/dist
+/obj
+/bin
 *.user
 err.log
 out.log
