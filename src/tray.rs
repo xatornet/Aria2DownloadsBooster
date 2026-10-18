@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use zbus::blocking::Connection;
 use zbus::zvariant::{ObjectPath, Type, Value};
 
@@ -68,12 +68,12 @@ fn run(quit: &AtomicBool, events: Sender<TrayEvent>) -> zbus::Result<()> {
     // p. ej. porque la sesión gráfica arranca después que la app.
     let mut warned = false;
     while !quit.load(Ordering::SeqCst) {
-        let res = conn.call(
+        let res = conn.call_method(
             Some("org.kde.StatusNotifierWatcher"),
             "/StatusNotifierWatcher",
             Some("org.kde.StatusNotifierWatcher"),
             "RegisterStatusNotifierItem",
-            &(service.as_str(),),
+            &service.as_str(),
         );
         match res {
             Ok(_) => {
@@ -113,7 +113,7 @@ impl Sni {
     }
 }
 
-#[zbus::dbus_interface(name = "org.kde.StatusNotifierItem")]
+#[zbus::interface(name = "org.kde.StatusNotifierItem")]
 impl Sni {
     #[zbus(property)]
     fn category(&self) -> String {
@@ -219,11 +219,22 @@ type MenuProps = HashMap<String, Value<'static>>;
 
 /// Nodo del menú: firma exacta (ia{sv}av) de com.canonical.dbusmenu GetLayout.
 /// (hojas: children vacío ⇒ av sin elementos).
-#[derive(Debug, Serialize, Deserialize, Type, zbus::zvariant::Value)]
+#[derive(Debug, Serialize, Type)]
 struct MenuNode {
     id: i32,
     properties: MenuProps,
     children: Vec<Value<'static>>,
+}
+
+impl From<MenuNode> for Value<'static> {
+    /// Hoja como variante (los elementos de `av` deben ser variantes).
+    fn from(n: MenuNode) -> Self {
+        let mut b = zbus::zvariant::StructureBuilder::default();
+        b = b.add_field(Value::from(n.id));
+        b = b.add_field(Value::from(n.properties));
+        b = b.add_field(Value::from(n.children));
+        Value::Structure(b.build())
+    }
 }
 
 fn item_props(id: i32) -> MenuProps {
@@ -255,7 +266,7 @@ impl Menu {
     }
 }
 
-#[zbus::dbus_interface(name = "com.canonical.dbusmenu")]
+#[zbus::interface(name = "com.canonical.dbusmenu")]
 impl Menu {
     #[zbus(property)]
     fn version(&self) -> u32 {
