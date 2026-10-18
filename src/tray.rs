@@ -16,7 +16,7 @@ use ksni::{Category, Status, ToolTip};
 use crate::i18n::tr;
 use crate::worker::TrayEvent;
 
-struct XtrTray {
+pub(crate) struct XtrTray {
     events: Sender<TrayEvent>,
 }
 
