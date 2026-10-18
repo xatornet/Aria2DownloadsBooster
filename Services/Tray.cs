@@ -56,7 +56,7 @@ public static class Tray
 
         var icon = new TrayIcon
         {
-            Icon = DrawIcon(),
+            Icon = AppIcon(),
             ToolTipText = "Aria-XTRDownloader",
             Menu = menu,
         };
@@ -72,6 +72,20 @@ public static class Tray
         w.Show();
         if (w.WindowState == WindowState.Minimized) w.WindowState = WindowState.Normal;
         w.Activate();
+    }
+
+    /// <summary>Icono de la app (Assets/icon.ico); si falta, lo dibuja en runtime.</summary>
+    private static WindowIcon AppIcon()
+    {
+        try
+        {
+            return new WindowIcon(AssetLoader.Open(
+                new Uri("avares://AriaXtrDownloader/Assets/icon.ico")));
+        }
+        catch
+        {
+            return DrawIcon();
+        }
     }
 
     /// <summary>Dibuja el icono ⚡ en runtime (no hay .ico en el repo): rayo vectorial sobre fondo oscuro.</summary>

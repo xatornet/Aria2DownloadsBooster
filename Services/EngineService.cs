@@ -202,6 +202,7 @@ public sealed class EngineService : IDisposable
                 var proc = Process.Start(psi);
                 if (proc == null) continue;
                 _proc = proc;
+                AssignToJob(proc);
 
                 var rpc = new AriaRpc(port, Secret);
 
@@ -337,5 +338,98 @@ public sealed class EngineService : IDisposable
     {
         try { if (_proc is { HasExited: false }) _proc.Kill(entireProcessTree: true); } catch { /* noop */ }
         _rpc = null;
+    }
+
+    // ------------------------------------------------------------------ garantía de cierre
+    //
+    // Job object de Windows con KILL_ON_JOB_CLOSE: el propio SO mata a aria2c si el
+    // proceso de la app muere de cualquier forma (Task Manager, apagado, crash).
+    // La parada ordenada (aria2.shutdown) sigue siendo el camino normal; esto es la red.
+
+    private IntPtr _job = IntPtr.Zero;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+    {
+        public long PerProcessUserTimeLimit;
+        public long PerJobUserTimeLimit;
+        public uint LimitFlags;
+        public UIntPtr MinimumWorkingSetSize;
+        public UIntPtr MaximumWorkingSetSize;
+        public uint ActiveProcessLimit;
+        public uint Affinity;
+        public uint PriorityClass;
+        public uint SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IO_COUNTERS
+    {
+        public ulong ReadOperationCount, WriteOperationCount, OtherOperationCount;
+        public ulong ReadTransferCount, WriteTransferCount, OtherTransferCount;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    {
+        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
+        public IO_COUNTERS IoInfo;
+        public UIntPtr ProcessMemoryLimit;
+        public UIntPtr JobMemoryLimit;
+        public UIntPtr PeakProcessMemoryUsed;
+        public UIntPtr PeakJobMemoryUsed;
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr CreateJobObjectW(IntPtr lpJobAttributes, string? lpName);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetInformationJobObject(IntPtr job, int infoClass, IntPtr lpJobObjectInfo, uint cbJobObjectInfoLength);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result);
+
+    private const uint JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000;
+
+    private void AssignToJob(Process proc)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        try
+        {
+            if (_job == IntPtr.Zero)
+            {
+                _job = CreateJobObjectW(IntPtr.Zero, "AriaXtrDownloader_daemon_job");
+                if (_job == IntPtr.Zero)
+                {
+                    UiLog.Write($"CreateJobObjectW falló err={Marshal.GetLastWin32Error()}");
+                    return;
+                }
+                // El tamano real de JOBOBJECT_EXTENDED_LIMIT_INFORMATION varía entre headers del SDK:
+                // probamos tamaños candidatos (LimitFlags siempre en offset 16; todo lo demás, 0).
+                var ptr = Marshal.AllocHGlobal(256);
+                try
+                {
+                    for (var k = 0; k < 256; k += 4) Marshal.WriteInt32(ptr + k, 0);
+                    Marshal.WriteInt32(ptr + 16, (int)JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE);
+                    int[] sizes = { 144, 136, Marshal.SizeOf<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() };
+                    var okSize = 0;
+                    foreach (var size in sizes)
+                    {
+                        if (SetInformationJobObject(_job, 9, ptr, (uint)size)) { okSize = size; break; }
+                    }
+                    UiLog.Write(okSize > 0
+                        ? $"job kill-on-close activo (struct {okSize}B)"
+                        : $"job kill-on-close NO aplicable err={Marshal.GetLastWin32Error()}");
+                }
+                finally { Marshal.FreeHGlobal(ptr); }
+            }
+            var assigned = AssignProcessToJobObject(_job, proc.Handle);
+            if (!assigned)
+                UiLog.Write($"AssignProcessToJobObject falló err={Marshal.GetLastWin32Error()}");
+        }
+        catch (Exception ex) { UiLog.Write("AssignToJob exc: " + ex.Message); }
     }
 }
