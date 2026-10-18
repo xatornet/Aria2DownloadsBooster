@@ -576,6 +576,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
     let empty2 = empty.clone();
     // dreno del canal del worker cada 25 ms (sin API de canal de glib: robusta entre versiones)
     let ev_cell = Rc::new(RefCell::new(rx));
+    let cmd_tx_events = cmd_tx.clone();
     let _attached = glib::timeout_add_local(std::time::Duration::from_millis(25), move || {
       loop {
         let ev = match ev_cell.borrow().try_recv() {
@@ -590,7 +591,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
                 map.borrow_mut().clear();
                 let mut n_active = 0usize;
                 for mr in &rows {
-                    let (row, w) = make_row(&cmd_tx, mr);
+                    let (row, w) = make_row(&cmd_tx_events, mr);
                     if mr.completed {
                         list_done.append(&row);
                     } else {
@@ -640,9 +641,12 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
         let a = app.clone();
         move |_| {
             let _ = t.send(Cmd::Shutdown);
-            glib::timeout_add_local(std::time::Duration::from_millis(6000), move || {
-                a.quit();
-                glib::ControlFlow::Break
+            glib::timeout_add_local(std::time::Duration::from_millis(6000), {
+                let a = a.clone();
+                move || {
+                    a.quit();
+                    glib::ControlFlow::Break
+                }
             });
             glib::Propagation::Stop
         }
