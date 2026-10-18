@@ -201,10 +201,12 @@ impl Sni {
     }
 
     fn activate(&self, _x: i32, _y: i32) {
+        crate::paths::ui_log_line("tray: Activate → mostrar ventana");
         let _ = self.events.send(TrayEvent::ShowWindow);
     }
 
     fn secondary_activate(&self, _x: i32, _y: i32) {
+        crate::paths::ui_log_line("tray: SecondaryActivate → mostrar ventana");
         let _ = self.events.send(TrayEvent::ShowWindow);
     }
 
