@@ -1,0 +1,21 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AriaXtr.App"
+             RequestedThemeVariant="Dark">
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://AriaXtrDownloader/Assets/Styles.axaml" />
+  </Application.Styles>
+
+  <Application.Resources>
+    <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+      <GradientStop Color="#1B2444" Offset="0" />
+      <GradientStop Color="#231B44" Offset="0.55" />
+      <GradientStop Color="#12141F" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AccentGradient" StartPoint="0%,50%" EndPoint="100%,50%">
+      <GradientStop Color="#38BDF8" Offset="0" />
+      <GradientStop Color="#8B5CF6" Offset="1" />
+    </LinearGradientBrush>
+  </Application.Resources>
+</Application>
