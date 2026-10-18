@@ -440,7 +440,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
         .build();
 
     let provider = gtk::CssProvider::new();
-    provider.load_from_data(include_bytes!("style.css").as_ref());
+    provider.load_from_data(include_str!("style.css"));
     let display = gtk::prelude::WidgetExt::display(&win);
     gtk::style_context_add_provider_for_display(
         &display,
