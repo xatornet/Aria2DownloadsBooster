@@ -48,7 +48,6 @@ fn make_row(cmd_tx: &Sender<Cmd>, mr: &ModelRow) -> (gtk::ListBoxRow, RowWidgets
     card.set_margin_bottom(2);
     card.set_margin_start(8);
     card.set_margin_end(8);
-    gtk::prelude::BoxExt::set_padding(&card, 10);
 
     // ── línea 1: nombre + badge + detalles
     let line1 = gtk::Box::new(gtk::Orientation::Horizontal, 8);
@@ -315,6 +314,7 @@ fn dialog_add(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(
 }
 
 fn dialog_settings(parent: &gtk::Window, cmd_tx: Sender<Cmd>, defaults: &Rc<RefCell<(String, i32)>>) {
+    let defaults = defaults.clone();
     let win = dialog_shell(parent, tr("Ajustes", "Settings"));
     let bx = win.child().and_then(|c| c.downcast::<gtk::Box>().ok()).unwrap();
 
@@ -440,7 +440,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
         .build();
 
     let provider = gtk::CssProvider::new();
-    provider.load_from_data(include_bytes!("style.css")).expect("CSS inválido");
+    provider.load_from_data(include_bytes!("style.css").as_ref());
     let display = gtk::prelude::WidgetExt::display(&win);
     gtk::style_context_add_provider_for_display(
         &display,

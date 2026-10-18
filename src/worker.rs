@@ -226,7 +226,7 @@ fn build_row(e: &Entry, done: i64, total: i64, speed: f64, conns: i32, retry_hin
         _ => ("#6B728A", false, true),
     };
     let fraction_known = total > 0;
-    let fraction = if fraction_known { ((done as f64 / total as f64).clamp(0.0, 1.0)) } else { 0.0 };
+    let fraction = if fraction_known { (done as f64 / total as f64).clamp(0.0, 1.0) } else { 0.0 };
     let eta_text = if fraction_known {
         if speed > 1.0 && done < total {
             format_eta((total - done) as f64 / speed)
