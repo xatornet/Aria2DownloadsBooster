@@ -1,0 +1,59 @@
+/* Tema oscuro Aria-XTRDownloader (paridad con la edición Windows) */
+
+window {
+  background-color: #171a26;
+  color: #e6e9f2;
+}
+
+.card {
+  background-color: #212536;
+  border-radius: 10px;
+  border: 1px solid #2c3147;
+}
+
+list.cards,
+list.cards row {
+  background: transparent;
+}
+
+list.cards row:selected {
+  background: transparent;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.meta {
+  color: #9aa2be;
+  font-size: 0.9em;
+}
+
+.err {
+  color: #ff8a80;
+}
+
+.flash {
+  color: #ffc96b;
+  font-weight: 600;
+}
+
+.dim-label {
+  color: #6b728a;
+  font-size: 0.85em;
+}
+
+progressbar trough {
+  min-height: 8px;
+  border-radius: 4px;
+  background-color: #2c3147;
+}
+
+progressbar progress {
+  border-radius: 4px;
+  background-color: #4f8cff;
+}
+
+button.destructive {
+  color: #ff8a80;
+}
