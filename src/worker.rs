@@ -416,7 +416,9 @@ fn poll(st: &mut State, engine: &Engine, out: &Sender<Event>, last_poll_err: &mu
                 let hidden_now = st.hidden;
                 let e = &mut st.entries[idx];
                 if status == "complete" {
-                    if hidden_now {
+                    // Solo en la TRANSICIÓN (una vez): si no se limpia el gid, aria2
+                    // sigue reportando "complete" en cada sondeo y la notificación se repite.
+                    if hidden_now && !e.completed {
                         desktop_notify(
                             &tr("Descarga completada", "Download completed"),
                             &format!("{} · {}", e.name, format_size(total as f64)),
@@ -426,6 +428,7 @@ fn poll(st: &mut State, engine: &Engine, out: &Sender<Event>, last_poll_err: &mu
                     e.status = "complete".into();
                     e.total = total;
                     e.error = None;
+                    e.gid = None; // fuera del daemon ⇒ fuera del sondeo para siempre
                     st.dirty = true;
                     structural = true;
                     let _ = rpc.call("aria2.forceRemove", &[json!(gid)]);
@@ -463,6 +466,10 @@ fn poll(st: &mut State, engine: &Engine, out: &Sender<Event>, last_poll_err: &mu
                                 st.dirty = true;
                             }
                         }
+                    } else if e.completed {
+                        // reliquia de registry.json anterior al fix (gid tras completar): extinguir
+                        e.gid = None;
+                        st.dirty = true;
                     } else {
                         e.status = "stopped".into();
                     }
