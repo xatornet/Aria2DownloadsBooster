@@ -443,8 +443,8 @@ fn apply_row(ri: &RowInfo, w: &RowWidgets) {
 
 // ------------------------------------------------------------------ ventana principal
 
-/// Instancia única (GtkApplication): la primera activate construye; las siguientes
-/// simplemente traen la ventana al frente (restaurar desde segundo plano).
+// Instancia única (GtkApplication): la primera activate construye; las siguientes
+// simplemente traen la ventana al frente (restaurar desde segundo plano).
 thread_local! {
     static EXISTING: RefCell<Option<(gtk::ApplicationWindow, Sender<Cmd>)>> = RefCell::new(None);
 }
@@ -667,7 +667,7 @@ pub fn build(app: &gtk::Application, rx: std::sync::mpsc::Receiver<Event>, cmd_t
             Event::HideWindow => {
                 quit_flag_ev.set(false);
                 let _ = cmd_tx_events.send(Cmd::SetHidden(true));
-                win_ev.hide();
+                win_ev.set_visible(false);
             }
             Event::Bye => app2.quit(),
         }

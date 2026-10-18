@@ -13,18 +13,27 @@ motor cae.
 |---|---|
 | UI | **Rust + gtk4-rs** (GTK ≥ 4.10, CSS oscuro propio) |
 | Motor | **aria2c** en modo demonio JSON-RPC (puertos 6800-6804) |
-| HTTP-RPC | `ureq` (solo localhost) |
+| HTTP-RPC | TCP propio sobre localhost (HTTP/1.1, sin dependencias) |
 | Persistencia | `registry.json` en `~/.local/share/Aria-XTRDownloader/` |
 
 ## Compilar y ejecutar en Arch
 
 ```bash
-sudo pacman -S --needed base-devel rust aria2 gtk4
+sudo pacman -S --needed base-devel rust aria2 gtk4 libnotify
 git clone -b arch https://github.com/xatornet/XTRDownloader.git
 cd XTRDownloader
 cargo build --release
 ./target/release/aria-xtrdownloader
 ```
+
+## Segundo plano y notificaciones
+
+- **Cerrar la ventana no cierra la aplicación**: se oculta y sigue descargando en segundo plano
+  (ajuste activable/desactivable). La primera vez avisa con una notificación del escritorio.
+- Al terminar una descarga mientras la ventana está oculta, notifica *«Descarga completada»*
+  (usa `notify-send` — paquete `libnotify`; si falta, se ignora en silencio).
+- **Relanzar la app restaura la ventana** (instancia única vía GtkApplication).
+- **Ctrl+Q** con la ventana visible = salida definitiva (apaga el motor aria2).
 
 ## Variables de entorno (opcionales)
 
